@@ -1,0 +1,31 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 17
+VisualStudioVersion = 17.2.32630.192
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.Cli.FindText", "Shibusa.Cli.FindText\Shibusa.Cli.FindText.csproj", "{E48BD157-FD09-480F-A83E-DBC3B29A664A}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.Cli.NameExtractor", "Shibusa.Cli.NameExtractor\Shibusa.Cli.NameExtractor.csproj", "{5EB715A2-8CB1-415C-96E7-FA2E0E57231A}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{E48BD157-FD09-480F-A83E-DBC3B29A664A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{E48BD157-FD09-480F-A83E-DBC3B29A664A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{E48BD157-FD09-480F-A83E-DBC3B29A664A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{E48BD157-FD09-480F-A83E-DBC3B29A664A}.Release|Any CPU.Build.0 = Release|Any CPU
+		{5EB715A2-8CB1-415C-96E7-FA2E0E57231A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{5EB715A2-8CB1-415C-96E7-FA2E0E57231A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{5EB715A2-8CB1-415C-96E7-FA2E0E57231A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{5EB715A2-8CB1-415C-96E7-FA2E0E57231A}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {849D9BB4-8B57-4C9A-8D3C-8ABB5E976E80}
+	EndGlobalSection
+EndGlobal
