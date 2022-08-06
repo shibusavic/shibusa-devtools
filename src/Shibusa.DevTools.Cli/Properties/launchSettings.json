@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Shibusa.DevTools.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "--help ft"
+    }
+  }
+}
