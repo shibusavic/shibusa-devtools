@@ -14,7 +14,7 @@ bool prefixFilenameWithNewline = true;
 bool useSingleline = false;
 RegexOptions regexOptions = RegexOptions.Multiline;
 DirectoryInfo dirInfo;
-SearchOption searchOption = SearchOption.TopDirectoryOnly;
+SearchOption searchOption = SearchOption.AllDirectories;
 int exitCode = -1;
 
 try
@@ -81,7 +81,7 @@ void ProcessFile(FileInfo file)
     string text = File.ReadAllText(file.FullName);
 
     var lines = new List<string>();
-    var regex = new Regex(expression);
+    var regex = new Regex(expression, regexOptions);
     MatchCollection matches = regex.Matches(text);
     if (matches.Any())
     {
@@ -143,21 +143,24 @@ void ShowLinesWithLineNumbers(FileInfo fileInfo, IEnumerable<string> matchedLine
 
 string AddExpression(string expression)
 {
-    if (forceExpression || (expression.StartsWith("^") && expression.EndsWith("$")))
+    const string prefix = "^.+?";
+    const string suffix = ".+?$";
+
+    if (forceExpression || (expression.StartsWith(prefix.First()) && expression.EndsWith(suffix.Last())))
     {
         return expression;
     }
-    else if (expression.StartsWith("^"))
+    else if (expression.StartsWith(prefix.First()))
     {
-        return AddExpression($"{expression}.+?$");
+        return AddExpression($"{expression}{suffix}");
     }
-    else if (expression.EndsWith("$"))
+    else if (expression.EndsWith(suffix.Last()))
     {
-        return AddExpression($"^.+?{expression}");
+        return AddExpression($"{prefix}{expression}");
     }
     else
     {
-        return AddExpression($"^.+?{expression}.+?$");
+        return AddExpression($"{prefix}{expression}{suffix}");
     }
 }
 
@@ -224,9 +227,8 @@ void HandleArguments(string[] args)
                 if (a > args.Length - 1) { throw new ArgumentException($"Expecting an extension after {args[a]}"); }
                 AddExtension(args[++a]);
                 break;
-            case "--recursive":
-            case "-r":
-                searchOption = SearchOption.AllDirectories;
+            case "--not-recursive":
+                searchOption = SearchOption.TopDirectoryOnly;
                 break;
             case "--names-only":
                 showLines = false;
@@ -235,7 +237,7 @@ void HandleArguments(string[] args)
             case "-ln":
                 showLineNumbers = true;
                 break;
-            case "--do-not-trim":
+            case "--no-trim":
                 trimLines = false;
                 break;
             case "--force":
@@ -255,7 +257,7 @@ void HandleArguments(string[] args)
                 }
                 else if (a == 1)
                 {
-                    expression = args[a];
+                    expression = AddExpression(args[a]);
                 }
                 else
                 {
@@ -312,9 +314,9 @@ void ShowHelp(string? message = null)
         { "[-x|--extension <file extension>]", "Add file extension to extensions searched. When no extensions are provided, all files are searched." },
         { "[-f|--force]", "Force your expression to be accepted without manipulation." },
         { "[-i|--insensitive]", "Make search case insensitive." },
-        { "[-r|--recursive]", "Make file searching include subdirectories." },
         { "[-ln|--show-line-numbers]", "Show the line numbers for matching lines." },
-        { "[--do-not-trim]", "Do not trim the matching lines in the output." },
+        { "[--not-recursive]", "Limit file searching to the top directory only." },
+        { "[--no-trim]", "Do not trim the matching lines in the output." },
         { "[--squash]","Prevent creation of blank lines before each file name in the output."},
         { "[--names-only]", "Show only file names." },
         { "[--use-singleline]", "Use Singleline (instead of the default Multiline) for regular expressions." },

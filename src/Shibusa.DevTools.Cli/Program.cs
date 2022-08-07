@@ -1,11 +1,11 @@
 ﻿using System.Diagnostics;
 using System.Reflection;
 
-const string findTextCommandKey = "ft";
+const string findLinesCommandKey = "fl";
 const string csProjCommandKey = "cs";
 
 Dictionary<string, string> subcommandDictionary = new(StringComparer.CurrentCultureIgnoreCase) {
-    { findTextCommandKey, "devtools-find-text.exe"},
+    { findLinesCommandKey, "devtools-find-lines.exe"},
     { csProjCommandKey, "devtools-csproj.exe"}
 };
 
@@ -49,7 +49,6 @@ else
 
     if (fileToExecute == null) throw new ArgumentException("A valid subcommand is required.");
 
-
     if (subcommandDictionary.Keys.Contains(subcommand))
     {
         ProcessStartInfo process_start_info = new()
@@ -79,7 +78,6 @@ FileInfo? GetSubcommandFileInfo(string? subcommand)
 
     var exes = Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories)
         .Select(f => new FileInfo(f));
-
     return exes.FirstOrDefault(f => f.Name.Equals(subcommandDictionary[subcommand], StringComparison.InvariantCultureIgnoreCase));
 }
 

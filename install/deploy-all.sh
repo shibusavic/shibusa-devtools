@@ -8,8 +8,8 @@ cd $src_dir
 cd Shibusa.DevTools.Cli
 dotnet build -c Release -o "${target_dir}/"
 
-cd ../Shibusa.DevTools.FindText.Cli
-dotnet build -c Release -o "${target_dir}/find-text/"
+cd ../Shibusa.DevTools.FindLines.Cli
+dotnet build -c Release -o "${target_dir}/find-lines/"
 
 cd ../Shibusa.DevTools.CsProjects.Cli
 dotnet build -c Release -o "${target_dir}/cs-projects/"

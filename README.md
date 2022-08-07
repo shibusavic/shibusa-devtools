@@ -1,8 +1,6 @@
 # Shibusa Dev Tools
 
-## Utilities
-
-**Shibusa.DevTools.Cli** is a console control program fro accessing the other dev tools.
+**Shibusa.DevTools.Cli** is a console control program for accessing the other dev tools.
 
 ```
 devtools
@@ -10,12 +8,11 @@ devtools --help
 devtools --help ft
 ```
 
-**Shibusa.DevTools.FindText.Cli** is a console application that can search across specific directories and file extensions for one or more regular expressions. Expressions can be applied as either individual or cumulative.
-
+**Shibusa.DevTools.FindLines.Cli** is a console application that can search across specific directories and file extensions for one or more regular expressions.
 ```
-devtools ft --help
-devtools ft . "Assembly\." 
-devtools ft -d . -e "Assembly\."
+devtools fl --help
+devtools fl . "Assembly\." 
+devtools fl -d . -e "Assembly\." # equivalent to previous command
 ```
 
 **Shibusa.DevTools.CsProjects.Cli** is a console application that reads `csproj` files and writes them and some of their dependencies to the console.
