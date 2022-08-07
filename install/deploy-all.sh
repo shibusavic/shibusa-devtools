@@ -11,4 +11,7 @@ dotnet build -c Release -o "${target_dir}/"
 cd ../Shibusa.DevTools.FindText.Cli
 dotnet build -c Release -o "${target_dir}/find-text/"
 
+cd ../Shibusa.DevTools.CsProjects.Cli
+dotnet build -c Release -o "${target_dir}/cs-projects/"
+
 cd $start_dir

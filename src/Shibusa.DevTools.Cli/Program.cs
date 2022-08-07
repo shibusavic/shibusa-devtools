@@ -2,9 +2,11 @@
 using System.Reflection;
 
 const string findTextCommandKey = "ft";
+const string csProjCommandKey = "cs";
 
 Dictionary<string, string> subcommandDictionary = new(StringComparer.CurrentCultureIgnoreCase) {
-    { findTextCommandKey, "devtools-find-text.exe"}
+    { findTextCommandKey, "devtools-find-text.exe"},
+    { csProjCommandKey, "devtools-csproj.exe"}
 };
 
 bool showHelp = false;
@@ -77,7 +79,6 @@ FileInfo? GetSubcommandFileInfo(string? subcommand)
 
     var exes = Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories)
         .Select(f => new FileInfo(f));
-    //.Where(f => subcommandDictionary.Values.Contains(f.Name, StringComparer.InvariantCultureIgnoreCase));
 
     return exes.FirstOrDefault(f => f.Name.Equals(subcommandDictionary[subcommand], StringComparison.InvariantCultureIgnoreCase));
 }
@@ -101,7 +102,7 @@ void HandleArguments(string[] args, out string[] childArgs)
                 {
                     if (a < args.Length - 1)
                     {
-                        if (subcommandDictionary.ContainsKey(argument))
+                        if (subcommandDictionary.ContainsKey(args[a + 1]))
                         {
                             subcommand ??= args[++a];
                         }
