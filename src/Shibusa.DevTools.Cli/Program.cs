@@ -4,10 +4,19 @@ using System.Reflection;
 const string findLinesCommandKey = "fl";
 const string csProjCommandKey = "cs";
 
-Dictionary<string, string> subcommandDictionary = new(StringComparer.CurrentCultureIgnoreCase) {
-    { findLinesCommandKey, "devtools-find-lines.exe"},
-    { csProjCommandKey, "devtools-csproj.exe"}
-};
+Dictionary<string, string> subcommandDictionary = new(StringComparer.InvariantCultureIgnoreCase);
+
+if (IsWindows())
+{
+    subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines.exe");
+    subcommandDictionary.Add(csProjCommandKey, "devtools-csproj.exe");
+}
+
+if (IsLinux() || IsMacOS())
+{
+    subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines");
+    subcommandDictionary.Add(csProjCommandKey, "devtools-csproj");
+}
 
 bool showHelp = false;
 string? subcommand = null;
@@ -73,11 +82,16 @@ FileInfo? GetSubcommandFileInfo(string? subcommand)
     var dir = AppDomain.CurrentDomain.BaseDirectory;
 
 #if DEBUG
-    dir = @"c:\repos\shibusa-devtools\src";
+    if (IsWindows())
+    {
+        dir = @"c:\repos\shibusa-devtools\src";
+    }
 #endif
 
-    var exes = Directory.GetFiles(dir, "*.exe", SearchOption.AllDirectories)
+    var exes = Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
+        .Where(f => subcommandDictionary.Values.Contains(new FileInfo(f).Name))
         .Select(f => new FileInfo(f));
+
     return exes.FirstOrDefault(f => f.Name.Equals(subcommandDictionary[subcommand], StringComparison.InvariantCultureIgnoreCase));
 }
 
@@ -145,3 +159,9 @@ void ShowHelp(string? message = null)
         Console.WriteLine($"{helpItem.Key.PadRight(maxKeyLength)}\t{helpItem.Value}");
     }
 }
+
+static bool IsWindows() => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
+
+static bool IsLinux() => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
+
+static bool IsMacOS() => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX);
