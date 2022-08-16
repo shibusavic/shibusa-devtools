@@ -1,4 +1,5 @@
-﻿using System.Reflection;
+﻿using Shibusa.DevTools.AppServices;
+using System.Reflection;
 using System.Text.RegularExpressions;
 
 string expression = "";
@@ -17,9 +18,13 @@ DirectoryInfo dirInfo;
 SearchOption searchOption = SearchOption.AllDirectories;
 int exitCode = -1;
 
+FileInfo configFileInfo = new FileInfo(".config");
+IDictionary<string, string> config = new Dictionary<string, string>();
+ConfigurationService configService = new ConfigurationService();
+
 try
 {
-    HandleArguments(args);
+    await HandleArgumentsAsync(args);
 
     if (showHelp)
     {
@@ -59,16 +64,8 @@ try
 }
 catch (Exception exc)
 {
-    if (exc is ArgumentException)
-    {
-        exitCode = -2;
-        ShowHelp(exc.Message);
-    }
-    else
-    {
-        exitCode = -3;
-        ShowHelp(exc.ToString());
-    }
+    exitCode = exc is ArgumentException ? -2 : -3;
+    ShowHelp(exc.Message);
 }
 finally
 {
@@ -146,6 +143,8 @@ string AddExpression(string expression)
     const string prefix = "^.+?";
     const string suffix = ".+?$";
 
+    if (config.ContainsKey(expression)) { return config[expression]; }
+
     if (forceExpression || (expression.StartsWith(prefix.First()) && expression.EndsWith(suffix.Last())))
     {
         return expression;
@@ -193,11 +192,23 @@ void AddSingleExtension(string extension)
     }
 }
 
-void HandleArguments(string[] args)
+async Task HandleArgumentsAsync(string[] args)
 {
+    int pos = Array.IndexOf(args, "--config-file");
+    if (pos < 0)
+    {
+        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.FindLines];
+    }
+    else
+    {
+        if (pos == args.Length - 1) { throw new ArgumentException($"Expected file name after {args[pos]}"); }
+        configFileInfo = new FileInfo(args[pos + 1]);
+        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.FindLines];
+    }
+
     for (int a = 0; a < args.Length; a++)
     {
-        string argument = args[a].ToString();
+        string argument = args[a].ToLower();
 
         switch (argument)
         {
@@ -249,6 +260,9 @@ void HandleArguments(string[] args)
                 break;
             case "--use-singleline":
                 useSingleline = true;
+                break;
+            case "--config-file":
+                a++;
                 break;
             default:
                 if (a == 0)
@@ -320,10 +334,11 @@ void ShowHelp(string? message = null)
         { "[--squash]","Prevent creation of blank lines before each file name in the output."},
         { "[--names-only]", "Show only file names." },
         { "[--use-singleline]", "Use Singleline (instead of the default Multiline) for regular expressions." },
+        { "[--config-file <path>]","Use specified configuration."},
         { "[-h|--help|?|-?]", "Show this help." }
     };
 
-    string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? "devtools-find-text";
+    string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? "devtools-find-lines";
 
     int maxKeyLength = helpDefinitions.Keys.Max(k => k.Length) + 1;
 

@@ -5,7 +5,19 @@
 ```
 devtools
 devtools --help
-devtools --help ft
+devtools --help fl
+```
+
+**Shibusa.DevTools.Config.Cli** is a console app for preserving aliases in a `.config` file.
+
+```
+devtools config --help
+devtools config show
+devtools config show fl
+devtools config show sql
+devtools config add sql.prod "c:\myprod.db"
+devtools config delete sql.prod
+devtools config remove sql.prod
 ```
 
 **Shibusa.DevTools.FindLines.Cli** is a console application that can search across specific directories and file extensions for one or more regular expressions.

@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Shibusa.DevTools.Config.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "show config"
+    }
+  }
+}

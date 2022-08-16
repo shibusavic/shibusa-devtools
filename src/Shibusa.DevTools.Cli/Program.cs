@@ -1,8 +1,11 @@
-﻿using System.Diagnostics;
+﻿using Shibusa.DevTools.AppServices;
+using System.Diagnostics;
 using System.Reflection;
 
 const string findLinesCommandKey = "fl";
 const string csProjCommandKey = "cs";
+const string sqlCommandKey = "sql";
+const string configCommandKey = "config";
 
 Dictionary<string, string> subcommandDictionary = new(StringComparer.InvariantCultureIgnoreCase);
 
@@ -10,17 +13,23 @@ if (IsWindows())
 {
     subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines.exe");
     subcommandDictionary.Add(csProjCommandKey, "devtools-csproj.exe");
+    subcommandDictionary.Add(sqlCommandKey, "devtools-sql.exe");
+    subcommandDictionary.Add(configCommandKey, "devtools-config.exe");
 }
 
 if (IsLinux() || IsMacOS())
 {
     subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines");
     subcommandDictionary.Add(csProjCommandKey, "devtools-csproj");
+    subcommandDictionary.Add(sqlCommandKey, "devtools-sql");
+    subcommandDictionary.Add(configCommandKey, "devtools-config");
 }
 
 bool showHelp = false;
 string? subcommand = null;
 int exitCode = 1;
+
+ConfigurationService configService = new();
 
 HandleArguments(args, out string[] childArgs);
 
@@ -64,7 +73,7 @@ else
         {
             WindowStyle = ProcessWindowStyle.Hidden,
             FileName = fileToExecute.FullName,
-            Arguments = string.Join(' ', args[1..^0])
+            Arguments = string.Join(' ', childArgs)
         };
         var process = Process.Start(process_start_info);
         process?.WaitForExit();
@@ -82,7 +91,7 @@ FileInfo? GetSubcommandFileInfo(string? subcommand)
     var dir = AppDomain.CurrentDomain.BaseDirectory;
 
 #if DEBUG
-    if (IsWindows())
+    if (IsWindows())    
     {
         dir = @"c:\repos\shibusa-devtools\src";
     }
@@ -97,7 +106,9 @@ FileInfo? GetSubcommandFileInfo(string? subcommand)
 
 void HandleArguments(string[] args, out string[] childArgs)
 {
-    childArgs = Array.Empty<string>();
+    var dir = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? String.Empty;
+
+    List<string> argsToPass = new();
 
     for (int a = 0; a < args.Length; a++)
     {
@@ -117,6 +128,7 @@ void HandleArguments(string[] args, out string[] childArgs)
                         if (subcommandDictionary.ContainsKey(args[a + 1]))
                         {
                             subcommand ??= args[++a];
+                            argsToPass.Add("--help");
                         }
                     }
                     showHelp = true;
@@ -126,13 +138,20 @@ void HandleArguments(string[] args, out string[] childArgs)
                 if (subcommandDictionary.ContainsKey(argument))
                 {
                     subcommand ??= argument;
-                    childArgs = args[++a..];
+                    argsToPass.AddRange(args[++a..]);
                 }
                 break;
         }
 
         if (!string.IsNullOrWhiteSpace(subcommand)) { break; } // If we hit a subcommand, we're done; everything that follows belongs to the subcommand.
     }
+
+    FileInfo configFile = new FileInfo(Path.Combine(dir, ".config"));
+
+    argsToPass.Add("--config-file");
+    argsToPass.Add(configFile.FullName);
+
+    childArgs = argsToPass.ToArray();
 }
 
 void ShowHelp(string? message = null)

@@ -1,4 +1,5 @@
-﻿using Shibusa.DevTools.CsProjects.Cli;
+﻿using Shibusa.DevTools.AppServices;
+using Shibusa.DevTools.CsProjects.Cli;
 using System.Diagnostics;
 using System.Reflection;
 
@@ -6,9 +7,13 @@ bool showHelp = false;
 int exitCode = -1;
 string inputDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
+FileInfo configFileInfo = new FileInfo(".config");
+IDictionary<string, string> config = new Dictionary<string, string>();
+ConfigurationService configService = new ConfigurationService();
+
 try
 {
-    HandleArguments(args);
+    await HandleArgumentsAsync(args);
 
     if (showHelp)
     {
@@ -55,16 +60,8 @@ try
 }
 catch (Exception exc)
 {
-    if (exc is ArgumentException)
-    {
-        exitCode = -2;
-        ShowHelp(exc.Message);
-    }
-    else
-    {
-        exitCode = -3;
-        ShowHelp(exc.ToString());
-    }
+    exitCode = exc is ArgumentException ? -2 : -3;
+    ShowHelp(exc.Message);
 }
 finally
 {
@@ -72,11 +69,23 @@ finally
     Environment.Exit(exitCode);
 }
 
-void HandleArguments(string[] args)
+async Task HandleArgumentsAsync(string[] args)
 {
+    int pos = Array.IndexOf(args, "--config-file");
+    if (pos < 0)
+    {
+        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsProjects];
+    }
+    else
+    {
+        if (pos == args.Length - 1) { throw new ArgumentException($"Expected file name after {args[pos]}"); }
+        configFileInfo = new FileInfo(args[pos + 1]);
+        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsProjects];
+    }
+
     for (int a = 0; a < args.Length; a++)
     {
-        string argument = args[a].ToString();
+        string argument = args[a].ToLower();
 
         switch (argument)
         {
@@ -91,6 +100,9 @@ void HandleArguments(string[] args)
             case "-d":
                 if (a > args.Length - 1) { throw new ArgumentException($"Expecting a directory after {args[a]}"); }
                 inputDirectory = args[++a];
+                break;
+            case "--config-file":
+                a++;
                 break;
             default:
                 if (a == 0)
@@ -119,7 +131,7 @@ void ShowHelp(string? message = null)
         { "[-h|--help|?|-?]", "Show this help." }
     };
 
-    string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? "devtools-find-text";
+    string assemblyName = Assembly.GetExecutingAssembly().GetName().Name ?? "devtools-csproj";
 
     int maxKeyLength = helpDefinitions.Keys.Max(k => k.Length) + 1;
 
