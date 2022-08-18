@@ -5,7 +5,8 @@ bool showHelp = false;
 
 int exitCode = -1;
 
-FileInfo configFileInfo = new FileInfo(".config");
+FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
+
 IDictionary<string, Dictionary<string, string>> configDictionary = new Dictionary<string, Dictionary<string, string>>();
 ConfigurationService configService = new ConfigurationService();
 
@@ -32,6 +33,7 @@ try
         if (action == ConfigAction.Show)
         {
             Console.WriteLine($"{Environment.NewLine}Config Keys: {string.Join(" | ", configDictionary.Keys)}");
+
             Console.WriteLine($"{Environment.NewLine}Aliases{Environment.NewLine}--------------------------------------");
 
             foreach (var key in configDictionary.Keys)

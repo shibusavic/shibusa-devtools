@@ -16,8 +16,7 @@ if (IsWindows())
     subcommandDictionary.Add(sqlCommandKey, "devtools-sql.exe");
     subcommandDictionary.Add(configCommandKey, "devtools-config.exe");
 }
-
-if (IsLinux() || IsMacOS())
+else
 {
     subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines");
     subcommandDictionary.Add(csProjCommandKey, "devtools-csproj");
@@ -52,7 +51,7 @@ if (args.Length == 0 || showHelp)
             {
                 WindowStyle = ProcessWindowStyle.Hidden,
                 FileName = fileToExecute.FullName,
-                Arguments = childArgs.Any() ? string.Join(' ', childArgs) : "--help"
+                Arguments = childArgs.Any() ? GetChildArgsString(childArgs) : "--help"
             };
             var process = Process.Start(process_start_info);
             process?.WaitForExit();
@@ -73,7 +72,7 @@ else
         {
             WindowStyle = ProcessWindowStyle.Hidden,
             FileName = fileToExecute.FullName,
-            Arguments = string.Join(' ', childArgs)
+            Arguments = GetChildArgsString(childArgs)
         };
         var process = Process.Start(process_start_info);
         process?.WaitForExit();
@@ -83,6 +82,23 @@ else
 }
 
 Environment.Exit(exitCode);
+
+string GetChildArgsString(string[] args)
+{
+    List<string> childArgs = new();
+    for (int a = 0; a < args.Length; a++)
+    {
+        if (args[a].Contains(" "))
+        {
+            childArgs.Add($"\"{args[a]}\"");
+        }
+        else
+        {
+            childArgs.Add(args[a]);
+        }
+    }
+    return string.Join(" ", childArgs);
+}
 
 FileInfo? GetSubcommandFileInfo(string? subcommand)
 {
@@ -180,7 +196,3 @@ void ShowHelp(string? message = null)
 }
 
 static bool IsWindows() => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Windows);
-
-static bool IsLinux() => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.Linux);
-
-static bool IsMacOS() => System.Runtime.InteropServices.RuntimeInformation.IsOSPlatform(System.Runtime.InteropServices.OSPlatform.OSX);

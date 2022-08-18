@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Shibusa.DevTools.Sql.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "-o -c \"Data Source=localhost;Initial Catalog=DevTools;Integrated Security=True\" -d \"c:\\temp\\db1\""
+    }
+  }
+}

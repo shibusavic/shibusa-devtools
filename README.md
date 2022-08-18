@@ -33,3 +33,10 @@ devtools fl -d . -e "Assembly\." # equivalent to previous command
 devtools cs --help
 devtools cs -d /c/repos
 ```
+
+**Shibusa.DevTools.Sql.Cli** is a console application for generating some reports related to a database's schema.
+
+```
+devtools sql --help
+devtools sql -d /c/temp/schema-reports/ -c "a valid MS Sql Server connection string"
+```

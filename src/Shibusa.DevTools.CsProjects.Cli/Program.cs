@@ -7,7 +7,8 @@ bool showHelp = false;
 int exitCode = -1;
 string inputDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-FileInfo configFileInfo = new FileInfo(".config");
+FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
+
 IDictionary<string, string> config = new Dictionary<string, string>();
 ConfigurationService configService = new ConfigurationService();
 
