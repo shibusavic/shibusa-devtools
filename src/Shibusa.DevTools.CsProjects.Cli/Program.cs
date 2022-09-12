@@ -107,7 +107,7 @@ try
                         var match = codeReferenceSet.FirstOrDefault(c => c.GetHashCode() == project.GetHashCode());
                         if (match != null)
                         {
-                            match.OrdinalPosition = child.OrdinalPosition + 1;
+                            match.OrdinalPosition = Math.Max(match.OrdinalPosition, child.OrdinalPosition + 1);
                             change = true;
                         }
                     }
@@ -120,6 +120,7 @@ try
         foreach (var item in codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project)
             .OrderBy(c => c.OrdinalPosition))
         {
+            Console.WriteLine(item);
             foreach (var child in item.Children.OrderBy(c => c.CodeReferenceType).ThenBy(c => c.OrdinalPosition))
             {
                 Console.WriteLine($"\t{child}");
@@ -128,6 +129,7 @@ try
 
         Console.WriteLine();
 
+        HashSet<string> messages = new();
         foreach (var project in codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project &&
             c.Children.Count > 1).OrderBy(c => c.OrdinalPosition))
         {
@@ -138,10 +140,15 @@ try
                 {
                     if (sibling.ContainsInChain(child.Name))
                     {
-                        Console.WriteLine($"{project}: Remove ref to {child}");
+                        messages.Add($"{project}: Remove ref to {child}");
                     }
                 }
             }
+        }
+
+        foreach (var message in messages)
+        {
+            Console.WriteLine(message);
         }
     }
 
