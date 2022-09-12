@@ -20,12 +20,12 @@ namespace Shibusa.DevTools.Infrastructure.Tests
             Assert.True(true);
         }
 
-        private Database CreateDatabase()
+        private static Database CreateDatabase()
         {
-            List<Table> tables = new List<Table>();
-            List<View> views = new List<View>();
-            List<Routine> routines = new List<Routine>();
-            List<ForeignKey> foreignKeys = new List<ForeignKey>();
+            List<Table> tables = new();
+            List<View> views = new();
+            List<Routine> routines = new();
+            List<ForeignKey> foreignKeys = new();
 
             var tableA = CreateTable("dbo", "A");
             var tableB = CreateTable("dbo", "B", "FK", tableA.Name);
@@ -47,9 +47,9 @@ namespace Shibusa.DevTools.Infrastructure.Tests
             return new Database("Test", tables, foreignKeys, routines, views);
         }
 
-        private Table CreateTable(string schema, string name, string fkColumn = null, string fkTableName = null)
+        private static Table CreateTable(string schema, string name, string? fkColumn = null, string? fkTableName = null)
         {
-            List<Column> columns = new List<Column>
+            List<Column> columns = new()
             {
                 new Column(schema, "Id", 1, null, false, "Int", 0, 0),
                 new Column(schema, "Name", 2, null, false, "VarChar", 50, 0)
@@ -63,7 +63,7 @@ namespace Shibusa.DevTools.Infrastructure.Tests
             return new Table(schema, name, columns);
         }
 
-        private ForeignKey CreateForeignKey(string schema, string name, Table parentTable, Table childTable)
+        private static ForeignKey CreateForeignKey(string schema, string name, Table parentTable, Table childTable)
         {
             return new ForeignKey(schema, name, parentTable, "Id", childTable, "FK");
         }

@@ -34,7 +34,9 @@ namespace Shibusa.DevTools.CsProjects.Cli
 
                     foreach (Match match in matches)
                     {
-                        projectRefs.Add(match.Groups[1].Value);
+                        var val = match.Groups[1].Value;
+                        var split = val.Split('\\');
+                        projectRefs.Add(split.Last());
                     }
 
                     ProjectReferences = projectRefs.ToArray();
@@ -72,7 +74,7 @@ namespace Shibusa.DevTools.CsProjects.Cli
 
         public string[] ProjectReferences { get; } = Array.Empty<string>();
 
-        public (string Ref, string? Version)[] PackageReferences { get; } = Array.Empty<(string Ref, string? Version)>();
+        public (string Package, string? Version)[] PackageReferences { get; } = Array.Empty<(string Package, string? Version)>();
 
         public string? PackageId { get; }
 
@@ -96,34 +98,34 @@ namespace Shibusa.DevTools.CsProjects.Cli
             return HashCode.Combine(Name, FullName, PackageId);
         }
 
-        public override string ToString() => IsNuget ? $"nuget: {FileInfo.Name}" : FileInfo.Name;
+        public override string ToString() => Name;
     }
 
-    internal class ProjectCollection
-    {
-        private IDictionary<CodeProjectFile, IList<CodeProjectFile>> profileFileDictionary;
-        public ProjectCollection()
-        {
-            Files = new();
-            profileFileDictionary = new Dictionary<CodeProjectFile, IList<CodeProjectFile>>();
-        }
+    //internal class ProjectCollection
+    //{
+    //    private IDictionary<CodeProjectFile, IList<CodeProjectFile>> profileFileDictionary;
+    //    public ProjectCollection()
+    //    {
+    //        Files = new();
+    //        profileFileDictionary = new Dictionary<CodeProjectFile, IList<CodeProjectFile>>();
+    //    }
 
-        public HashSet<CodeProjectFile> Files { get; }
+    //    public HashSet<CodeProjectFile> Files { get; }
 
-        public void WriteCollectionToStream(Stream stream)
-        {
-            if (!stream.CanWrite) throw new ArgumentException("Cannot write to provided stream.");
+    //    public void WriteCollectionToStream(Stream stream)
+    //    {
+    //        if (!stream.CanWrite) throw new ArgumentException("Cannot write to provided stream.");
             
-            FinalizeDictionary();
+    //        FinalizeDictionary();
 
 
-        }
+    //    }
 
-        private void FinalizeDictionary()
-        {
+    //    private void FinalizeDictionary()
+    //    {
 
-        }
-    }
+    //    }
+    //}
     //internal record CodeProject
     //{
     //    public CodeProject(FileInfo fileInfo, bool isNuget = false)

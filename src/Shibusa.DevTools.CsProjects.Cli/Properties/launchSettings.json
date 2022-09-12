@@ -2,7 +2,7 @@
   "profiles": {
     "Shibusa.DevTools.CsProjects": {
       "commandName": "Project",
-      "commandLineArgs": "-d c:\\repos\\Kyna\\src\\"
+      "commandLineArgs": "-d c:\\repos\\Kyna\\"
     }
   }
 }

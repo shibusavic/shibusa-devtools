@@ -198,13 +198,13 @@ async Task HandleArgumentsAsync(string[] args)
     int pos = Array.IndexOf(args, "--config-file");
     if (pos < 0)
     {
-        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.FindLines];
+        config = (await ConfigurationService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.FindLines];
     }
     else
     {
         if (pos == args.Length - 1) { throw new ArgumentException($"Expected file name after {args[pos]}"); }
         configFileInfo = new FileInfo(args[pos + 1]);
-        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.FindLines];
+        config = (await ConfigurationService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.FindLines];
     }
 
     for (int a = 0; a < args.Length; a++)

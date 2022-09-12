@@ -7,10 +7,10 @@ bool showHelp = false;
 int exitCode = -1;
 string inputDirectory = AppDomain.CurrentDomain.BaseDirectory;
 
-FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
+FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 
 IDictionary<string, string> config = new Dictionary<string, string>();
-ConfigurationService configService = new ConfigurationService();
+ConfigurationService configService = new();
 
 try
 {
@@ -23,41 +23,129 @@ try
     }
     else
     {
-        DirectoryInfo directoryInfo = new DirectoryInfo(inputDirectory);
+        DirectoryInfo directoryInfo = new(inputDirectory);
 
         if (!directoryInfo.Exists) throw new ArgumentException("Bad directory.");
 
         var csProjFiles = directoryInfo.GetFiles("*.csproj", SearchOption.AllDirectories);
 
-        var collection = new ProjectCollection();
+        var fileCollection = new List<CodeProjectFile>();
+        //var collection = new ProjectCollection();
 
         foreach (var file in csProjFiles)
         {
-            collection.Files.Add(new CodeProjectFile(file));
-            collection.Files.Add(new CodeProjectFile(file)); // testing equality here
+            fileCollection.Add(new CodeProjectFile(file));
         }
 
-        Debug.Assert(collection.Files.Count == csProjFiles.Length); // testing equality here
+        SortedSet<CodeReference> codeReferenceSet = new();
 
-        foreach (var item in collection.Files)
+        foreach (var item in fileCollection)
         {
-            Console.WriteLine(item.ToString());
-            Console.WriteLine("\tPackage References");
-            foreach (var r in item.PackageReferences)
+            codeReferenceSet.Add(new CodeReference(item.Name, CodeReferenceType.Project, null, 0));
+
+            int pos = 0;
+            foreach (var projectRef in item.ProjectReferences)
             {
-                Console.WriteLine($"\t\tnuget: {r.Ref}, {r.Version}");
+                codeReferenceSet.Add(new CodeReference(projectRef, CodeReferenceType.Project, null, pos++));
             }
 
-            Console.WriteLine("\tProject References");
-            foreach (var r in item.ProjectReferences)
+            pos = 0;
+            foreach (var nugetRef in item.PackageReferences)
             {
-                Console.WriteLine($"\t\t{r}");
+                codeReferenceSet.Add(new CodeReference(nugetRef.Package, CodeReferenceType.NuGet, nugetRef.Version, pos++));
             }
-            Console.WriteLine();
         }
 
-        exitCode = 0;
+        List<CodeReference> copy = new List<CodeReference>(codeReferenceSet);
+
+        foreach (var item in copy)
+        {
+            var matchingItem = codeReferenceSet.FirstOrDefault(c => c.Name == item.Name && c.CodeReferenceType == item.CodeReferenceType);
+            Debug.Assert(matchingItem != null);
+
+            var matchingFileItem = fileCollection.FirstOrDefault(f => f.Name == item.Name);
+
+            if (matchingFileItem != null)
+            {
+                foreach (var projectRef in matchingFileItem.ProjectReferences)
+                {
+                    var matchingRef = codeReferenceSet.FirstOrDefault(c => c.Name == projectRef);
+
+                    if (matchingRef != null && !matchingItem.Children.Contains(matchingRef))
+                    {
+                        matchingItem.Children.Add(matchingRef);
+                    }
+                }
+
+                foreach (var nugetRef in matchingFileItem.PackageReferences)
+                {
+                    var matchingRef = codeReferenceSet.FirstOrDefault(c => c.Name == nugetRef.Package &&
+                        c.Version == new Shibusa.DevTools.CsProjects.Cli.Version(nugetRef.Version));
+
+                    if (matchingRef != null && !matchingItem.Children.Contains(matchingRef))
+                    {
+                        matchingItem.Children.Add(matchingRef);
+                    }
+                }
+            }
+        }
+
+        bool change;
+
+        do
+        {
+            change = false;
+            var projects = codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project)
+                .OrderBy(c => c.OrdinalPosition).ToArray();
+
+            foreach (var project in projects.ToArray())
+            {
+                foreach (var child in project.Children.ToArray())
+                {
+                    if (project.OrdinalPosition <= child.OrdinalPosition)
+                    {
+                        var match = codeReferenceSet.FirstOrDefault(c => c.GetHashCode() == project.GetHashCode());
+                        if (match != null)
+                        {
+                            match.OrdinalPosition = child.OrdinalPosition + 1;
+                            change = true;
+                        }
+                    }
+                }
+            }
+        }
+        while (change);
+
+
+        foreach (var item in codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project)
+            .OrderBy(c => c.OrdinalPosition))
+        {
+            foreach (var child in item.Children.OrderBy(c => c.CodeReferenceType).ThenBy(c => c.OrdinalPosition))
+            {
+                Console.WriteLine($"\t{child}");
+            }
+        }
+
+        Console.WriteLine();
+
+        foreach (var project in codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project &&
+            c.Children.Count > 1).OrderBy(c => c.OrdinalPosition))
+        {
+            foreach (var child in project.Children)
+            {
+                var siblings = project.Children.Except(new[] { child });
+                foreach (var sibling in siblings)
+                {
+                    if (sibling.ContainsInChain(child.Name))
+                    {
+                        Console.WriteLine($"{project}: Remove ref to {child}");
+                    }
+                }
+            }
+        }
     }
+
+    exitCode = 0;
 }
 catch (Exception exc)
 {
@@ -75,13 +163,13 @@ async Task HandleArgumentsAsync(string[] args)
     int pos = Array.IndexOf(args, "--config-file");
     if (pos < 0)
     {
-        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsProjects];
+        config = (await ConfigurationService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsProjects];
     }
     else
     {
         if (pos == args.Length - 1) { throw new ArgumentException($"Expected file name after {args[pos]}"); }
         configFileInfo = new FileInfo(args[pos + 1]);
-        config = (await configService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsProjects];
+        config = (await ConfigurationService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsProjects];
     }
 
     for (int a = 0; a < args.Length; a++)

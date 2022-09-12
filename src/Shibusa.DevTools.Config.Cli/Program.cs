@@ -89,13 +89,13 @@ async Task HandleArgumentsAsync(string[] args)
 
     if (pos < 0)
     {
-        configDictionary = await configService.GetConfigurationAsync(configFileInfo);
+        configDictionary = await ConfigurationService.GetConfigurationAsync(configFileInfo);
     }
     else
     {
         if (pos == arguments.Length - 1) { throw new ArgumentException($"Expected file name after {args[pos]}"); }
         configFileInfo = new FileInfo(arguments[pos + 1]);
-        configDictionary = await configService.GetConfigurationAsync(configFileInfo);
+        configDictionary = await ConfigurationService.GetConfigurationAsync(configFileInfo);
     }
 
     arguments = args[..pos];

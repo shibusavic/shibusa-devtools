@@ -24,13 +24,13 @@ namespace Shibusa.DevTools.AppServices
             }
         }
 
-        private static JsonSerializerOptions serializerOptions = new()
+        private static readonly JsonSerializerOptions serializerOptions = new()
         {
             PropertyNameCaseInsensitive = true,
             PropertyNamingPolicy = JsonNamingPolicy.CamelCase
         };
 
-        public async Task<IDictionary<string, Dictionary<string, string>>> GetConfigurationAsync(FileInfo fileInfo)
+        public static async Task<IDictionary<string, Dictionary<string, string>>> GetConfigurationAsync(FileInfo fileInfo)
         {
             if (!fileInfo.Exists) { return await CreateConfigurationFileAsync(fileInfo); }
 
