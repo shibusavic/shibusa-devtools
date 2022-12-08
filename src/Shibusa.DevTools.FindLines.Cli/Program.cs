@@ -18,10 +18,9 @@ DirectoryInfo dirInfo;
 SearchOption searchOption = SearchOption.AllDirectories;
 int exitCode = -1;
 
-FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
+FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 
 IDictionary<string, string> config = new Dictionary<string, string>();
-ConfigurationService configService = new ConfigurationService();
 
 try
 {
@@ -30,7 +29,6 @@ try
     if (showHelp)
     {
         ShowHelp();
-        exitCode = 0;
     }
     else
     {
@@ -59,9 +57,9 @@ try
         {
             Console.WriteLine("No files matched your extension configuration or no file were present to find.");
         }
-
-        exitCode = 0;
     }
+
+    exitCode = 0;
 }
 catch (Exception exc)
 {
@@ -83,7 +81,7 @@ void ProcessFile(FileInfo file)
     MatchCollection matches = regex.Matches(text);
     if (matches.Any())
     {
-        foreach (Match match in matches)
+        foreach (Match match in matches.Cast<Match>())
         {
             string line = match.Groups[0].Value;
             if (!regex.IsMatch(line))
@@ -166,7 +164,7 @@ string AddExpression(string expression)
 
 void AddExtension(string extension)
 {
-    if (extension.Contains(","))
+    if (extension.Contains(','))
     {
         var split = extension.Split(",", StringSplitOptions.RemoveEmptyEntries);
         foreach (var s in split)
@@ -280,6 +278,11 @@ async Task HandleArgumentsAsync(string[] args)
                 }
                 break;
         }
+
+        if (!string.IsNullOrWhiteSpace(directory) && config.ContainsKey(directory))
+        {
+            directory = config[directory!];
+        }
     }
 }
 
@@ -335,7 +338,7 @@ void ShowHelp(string? message = null)
         { "[--squash]","Prevent creation of blank lines before each file name in the output."},
         { "[--names-only]", "Show only file names." },
         { "[--use-singleline]", "Use Singleline (instead of the default Multiline) for regular expressions." },
-        { "[--config-file <path>]","Use specified configuration."},
+        { "[--config-file <path>]","Use specified configuration file. Passed by default from CLI caller."},
         { "[-h|--help|?|-?]", "Show this help." }
     };
 
@@ -349,34 +352,4 @@ void ShowHelp(string? message = null)
     {
         Console.WriteLine($"{helpItem.Key.PadRight(maxKeyLength)}\t{helpItem.Value}");
     }
-
-    //Console.WriteLine($"{Environment.NewLine}Examples:");
-    //Console.WriteLine($"{Environment.NewLine}Find any file containing the whole word 'the' - case-sensitive search:");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"\\bthe\\b\"");
-
-    //Console.WriteLine($"{Environment.NewLine}Same search, but case insensitive:");
-    //Console.WriteLine($"\t{assemblyName} - \"/c/repos\" -e \"\\bthe\\b\" -i");
-
-    //Console.WriteLine($"{Environment.NewLine}Same search, but case insensitive and searching subdirectories:");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"\\bthe\\b\" -i -r");
-
-    //Console.WriteLine($"{Environment.NewLine}Shows lines:");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"\\bthe\\b\" -i -r -l");
-
-    //Console.WriteLine($"{Environment.NewLine}Shows lines with line numbers:");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"\\bthe\\b\" -i -r -ln");
-
-    //Console.WriteLine($"equivalent to:");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"\\bthe\\b\" -i -r -ln -l");
-
-    //Console.WriteLine($"{Environment.NewLine}Trim the lines in the output:");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"\\bthe\\b\" -i -r -ln -t");
-
-    //Console.WriteLine($"{Environment.NewLine}Force your expression (to avoid full-line-capturing manipulation):");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"First Name: [a-zA-Z]+\" -r -ln -f");
-
-    //Console.WriteLine($"{Environment.NewLine}Find a multi-line block of text (by switching to single-line):");
-    //Console.WriteLine($"\t\t(It may seem counter-intuitive, but you use the single-line regular expression option to accomplish this;");
-    //Console.WriteLine("\t\t see: https://docs.microsoft.com/en-us/dotnet/standard/base-types/regular-expression-options.)");
-    //Console.WriteLine($"\t{assemblyName} -d \"/c/repos\" -e \"<Id>.*</Id>\" -s -r -f");
 }

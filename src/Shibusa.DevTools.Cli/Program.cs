@@ -2,33 +2,28 @@
 using System.Diagnostics;
 using System.Reflection;
 
-const string findLinesCommandKey = "fl";
-const string csProjCommandKey = "cs";
-const string sqlCommandKey = "sql";
-const string configCommandKey = "config";
-
 Dictionary<string, string> subcommandDictionary = new(StringComparer.InvariantCultureIgnoreCase);
 
 if (IsWindows())
 {
-    subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines.exe");
-    subcommandDictionary.Add(csProjCommandKey, "devtools-csproj.exe");
-    subcommandDictionary.Add(sqlCommandKey, "devtools-sql.exe");
-    subcommandDictionary.Add(configCommandKey, "devtools-config.exe");
+    subcommandDictionary.Add(ConfigurationService.Keys.FindLines, "devtools-find-lines.exe");
+    subcommandDictionary.Add(ConfigurationService.Keys.CsProjects, "devtools-csproj.exe");
+    subcommandDictionary.Add(ConfigurationService.Keys.Sql, "devtools-sql.exe");
+    subcommandDictionary.Add(ConfigurationService.Keys.Config, "devtools-config.exe");
+    subcommandDictionary.Add(ConfigurationService.Keys.CsGen, "devtools-csgen.exe");
 }
 else
 {
-    subcommandDictionary.Add(findLinesCommandKey, "devtools-find-lines");
-    subcommandDictionary.Add(csProjCommandKey, "devtools-csproj");
-    subcommandDictionary.Add(sqlCommandKey, "devtools-sql");
-    subcommandDictionary.Add(configCommandKey, "devtools-config");
+    subcommandDictionary.Add(ConfigurationService.Keys.FindLines, "devtools-find-lines");
+    subcommandDictionary.Add(ConfigurationService.Keys.CsProjects, "devtools-csproj");
+    subcommandDictionary.Add(ConfigurationService.Keys.Sql, "devtools-sql");
+    subcommandDictionary.Add(ConfigurationService.Keys.Config, "devtools-config");
+    subcommandDictionary.Add(ConfigurationService.Keys.CsGen, "devtools-csgen");
 }
 
 bool showHelp = false;
 string? subcommand = null;
 int exitCode = 1;
-
-ConfigurationService configService = new();
 
 HandleArguments(args, out string[] childArgs);
 
@@ -45,7 +40,7 @@ if (args.Length == 0 || showHelp)
 
         if (fileToExecute == null) throw new ArgumentException("A valid subcommand is required.");
 
-        if (subcommandDictionary.Keys.Contains(subcommand))
+        if (subcommandDictionary.ContainsKey(subcommand))
         {
             ProcessStartInfo process_start_info = new()
             {
@@ -66,7 +61,7 @@ else
 
     if (fileToExecute == null) throw new ArgumentException("A valid subcommand is required.");
 
-    if (subcommandDictionary.Keys.Contains(subcommand))
+    if (subcommand != null && subcommandDictionary.ContainsKey(subcommand))
     {
         ProcessStartInfo process_start_info = new()
         {
@@ -88,7 +83,7 @@ string GetChildArgsString(string[] args)
     List<string> childArgs = new();
     for (int a = 0; a < args.Length; a++)
     {
-        if (args[a].Contains(" "))
+        if (args[a].Contains(' '))
         {
             childArgs.Add($"\"{args[a]}\"");
         }
@@ -107,14 +102,14 @@ FileInfo? GetSubcommandFileInfo(string? subcommand)
     var dir = AppDomain.CurrentDomain.BaseDirectory;
 
 #if DEBUG
-    if (IsWindows())    
+    if (IsWindows())
     {
         dir = @"c:\repos\shibusa-devtools\src";
     }
 #endif
 
     var exes = Directory.GetFiles(dir, "*", SearchOption.AllDirectories)
-        .Where(f => subcommandDictionary.Values.Contains(new FileInfo(f).Name))
+        .Where(f => subcommandDictionary.ContainsValue(new FileInfo(f).Name))
         .Select(f => new FileInfo(f));
 
     return exes.FirstOrDefault(f => f.Name.Equals(subcommandDictionary[subcommand], StringComparison.InvariantCultureIgnoreCase));
@@ -159,10 +154,11 @@ void HandleArguments(string[] args, out string[] childArgs)
                 break;
         }
 
-        if (!string.IsNullOrWhiteSpace(subcommand)) { break; } // If we hit a subcommand, we're done; everything that follows belongs to the subcommand.
+        // If we hit a subcommand, we're done; everything that follows belongs to the subcommand.
+        if (!string.IsNullOrWhiteSpace(subcommand)) { break; }
     }
 
-    FileInfo configFile = new FileInfo(Path.Combine(dir, ".config"));
+    FileInfo configFile = new(Path.Combine(dir, ".config"));
 
     argsToPass.Add("--config-file");
     argsToPass.Add(configFile.FullName);

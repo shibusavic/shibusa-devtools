@@ -10,7 +10,6 @@ string inputDirectory = AppDomain.CurrentDomain.BaseDirectory;
 FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 
 IDictionary<string, string> config = new Dictionary<string, string>();
-ConfigurationService configService = new();
 
 try
 {
@@ -19,7 +18,6 @@ try
     if (showHelp)
     {
         ShowHelp();
-        exitCode = 0;
     }
     else
     {
@@ -30,7 +28,6 @@ try
         var csProjFiles = directoryInfo.GetFiles("*.csproj", SearchOption.AllDirectories);
 
         var fileCollection = new List<CodeProjectFile>();
-        //var collection = new ProjectCollection();
 
         foreach (var file in csProjFiles)
         {
@@ -56,7 +53,7 @@ try
             }
         }
 
-        List<CodeReference> copy = new List<CodeReference>(codeReferenceSet);
+        List<CodeReference> copy = new(codeReferenceSet);
 
         foreach (var item in copy)
         {
@@ -224,6 +221,7 @@ void ShowHelp(string? message = null)
     Dictionary<string, string> helpDefinitions = new()
     {
         { "(-d|--directory|--dir) <directory>", "The directory to search." },
+        { "[--config-file <path>]","Use specified configuration file. Passed by default from CLI caller."},
         { "[-h|--help|?|-?]", "Show this help." }
     };
 

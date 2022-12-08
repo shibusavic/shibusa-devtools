@@ -8,12 +8,15 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Folder Include="Abstractions\" />
     <Folder Include="Schemas\" />
   </ItemGroup>
 
   <ItemGroup>
     <PackageReference Include="Dapper" Version="2.0.123" />
+    <PackageReference Include="Shibusa.Extensions" Version="7.1.0" />
     <PackageReference Include="System.Data.SqlClient" Version="4.8.5" />
+    <PackageReference Include="Npgsql" Version="7.0.0" />
   </ItemGroup>
 
 </Project>

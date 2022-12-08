@@ -2,13 +2,13 @@
 using System.Reflection;
 
 bool showHelp = false;
+string NL = Environment.NewLine;
 
 int exitCode = -1;
 
-FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
+FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 
 IDictionary<string, Dictionary<string, string>> configDictionary = new Dictionary<string, Dictionary<string, string>>();
-ConfigurationService configService = new ConfigurationService();
 
 ConfigAction action = ConfigAction.None;
 string? commandKey = null;
@@ -23,7 +23,6 @@ try
     if (showHelp)
     {
         ShowHelp();
-        exitCode = 0;
     }
     else
     {
@@ -32,7 +31,7 @@ try
 #endif
         if (action == ConfigAction.Show)
         {
-            Console.WriteLine($"{Environment.NewLine}Config Keys: {string.Join(" | ", configDictionary.Keys)}");
+            Console.WriteLine($"{Environment.NewLine}Config Keys Prefixes: {string.Join(" | ", configDictionary.Keys)}");
 
             Console.WriteLine($"{Environment.NewLine}Aliases{Environment.NewLine}--------------------------------------");
 
@@ -47,6 +46,7 @@ try
                     }
                 }
             }
+            WriteExamples();
         }
 
         if (action == ConfigAction.Add)
@@ -66,9 +66,9 @@ try
                 await ConfigurationService.SaveConfigurationFileAsync(configDictionary, configFileInfo);
             }
         }
-
-        exitCode = 0;
     }
+
+    exitCode= 0;
 }
 catch (Exception exc)
 {
@@ -144,13 +144,13 @@ async Task HandleArgumentsAsync(string[] args)
                     aliasValue = args[++a];
                 }
             }
-            continue;
         }
     }
 }
 
 void ShowHelp(string? message = null)
 {
+
     if (!string.IsNullOrWhiteSpace(message))
     {
         Console.WriteLine(message);
@@ -161,6 +161,7 @@ void ShowHelp(string? message = null)
         { "[show [<key>]]", "Show the key/value pairs; use <key> to filter."},
         { "[add <key> <value>]","Add a key/value pair to the config."},
         { "[(delete|remove) <key>]","Remove a key/value pair from the config."},
+        { "[--config-file <path>]","Use specified configuration file. Passed by default from CLI caller."},
         { "[-h|--help|?|-?]", "Show this help." }
     };
 
@@ -168,12 +169,18 @@ void ShowHelp(string? message = null)
 
     int maxKeyLength = helpDefinitions.Keys.Max(k => k.Length) + 1;
 
-    Console.WriteLine($"{Environment.NewLine}{assemblyName} {string.Join(' ', helpDefinitions.Keys)}{Environment.NewLine}");
+    Console.WriteLine($"{NL}{assemblyName} {string.Join(' ', helpDefinitions.Keys)}{NL}");
 
     foreach (var helpItem in helpDefinitions)
     {
         Console.WriteLine($"{helpItem.Key.PadRight(maxKeyLength)}\t{helpItem.Value}");
     }
+    WriteExamples();
+}
+
+void WriteExamples()
+{
+    Console.WriteLine($"{NL}To add an alias: devtools config add fl.test \"this is my value\"");
 }
 
 (string Key, string AliasKey) GetAliasKeys(string alias)

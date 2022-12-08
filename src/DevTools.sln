@@ -13,7 +13,7 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.DevTools.Sql.Cli", 
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.DevTools.AppServices", "Shibusa.DevTools.AppServices\Shibusa.DevTools.AppServices.csproj", "{B3BF7645-396C-4103-A1B3-86914D5F97BD}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shibusa.DevTools.Config.Cli", "Shibusa.DevTools.Config.Cli\Shibusa.DevTools.Config.Cli.csproj", "{283673DC-AA3A-4D2D-BB87-F85B421B324C}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.DevTools.Config.Cli", "Shibusa.DevTools.Config.Cli\Shibusa.DevTools.Config.Cli.csproj", "{283673DC-AA3A-4D2D-BB87-F85B421B324C}"
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "ui", "ui", "{D91624ED-F9A2-4D8D-8043-6C95A75C1391}"
 EndProject
@@ -21,9 +21,11 @@ Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "libraries", "libraries", "{
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "tests", "tests", "{0D8C5880-0626-4DC1-9570-077669845E06}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shibusa.DevTools.Infrastructure", "Shibusa.DevTools.Infrastructure\Shibusa.DevTools.Infrastructure.csproj", "{FE86A7F6-FD1F-42B1-9221-9DCC8CF38B31}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.DevTools.Infrastructure", "Shibusa.DevTools.Infrastructure\Shibusa.DevTools.Infrastructure.csproj", "{FE86A7F6-FD1F-42B1-9221-9DCC8CF38B31}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shibusa.DevTools.Infrastructure.Tests", "Shibusa.DevTools.Infrastructure.Tests\Shibusa.DevTools.Infrastructure.Tests.csproj", "{0902ABD8-CC26-4A22-B3B9-449A080C695E}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Shibusa.DevTools.Infrastructure.Tests", "Shibusa.DevTools.Infrastructure.Tests\Shibusa.DevTools.Infrastructure.Tests.csproj", "{0902ABD8-CC26-4A22-B3B9-449A080C695E}"
+EndProject
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Shibusa.DevTools.CsGenerator.Cli", "Shibusa.DevTools.CsGenerator.Cli\Shibusa.DevTools.CsGenerator.Cli.csproj", "{156E2F61-8BC0-47F9-AFE6-9D443A05010A}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -63,6 +65,10 @@ Global
 		{0902ABD8-CC26-4A22-B3B9-449A080C695E}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{0902ABD8-CC26-4A22-B3B9-449A080C695E}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{0902ABD8-CC26-4A22-B3B9-449A080C695E}.Release|Any CPU.Build.0 = Release|Any CPU
+		{156E2F61-8BC0-47F9-AFE6-9D443A05010A}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{156E2F61-8BC0-47F9-AFE6-9D443A05010A}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{156E2F61-8BC0-47F9-AFE6-9D443A05010A}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{156E2F61-8BC0-47F9-AFE6-9D443A05010A}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
@@ -76,6 +82,7 @@ Global
 		{283673DC-AA3A-4D2D-BB87-F85B421B324C} = {D91624ED-F9A2-4D8D-8043-6C95A75C1391}
 		{FE86A7F6-FD1F-42B1-9221-9DCC8CF38B31} = {46F5501B-F0E7-4B1B-8C38-250D057EB935}
 		{0902ABD8-CC26-4A22-B3B9-449A080C695E} = {0D8C5880-0626-4DC1-9570-077669845E06}
+		{156E2F61-8BC0-47F9-AFE6-9D443A05010A} = {D91624ED-F9A2-4D8D-8043-6C95A75C1391}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {849D9BB4-8B57-4C9A-8D3C-8ABB5E976E80}

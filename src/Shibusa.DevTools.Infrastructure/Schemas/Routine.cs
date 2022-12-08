@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-
-namespace Shibusa.DevTools.Infrastructure.Schemas
+﻿namespace Shibusa.DevTools.Infrastructure.Schemas
 {
     /// <summary>
     /// Represents a Sql Server Routine.

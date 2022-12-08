@@ -1,0 +1,8 @@
+{
+  "profiles": {
+    "Shibusa.DevTools.CsGenerator.Cli": {
+      "commandName": "Project",
+      "commandLineArgs": "--help"
+    }
+  }
+}

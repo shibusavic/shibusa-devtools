@@ -12,7 +12,6 @@ string? connectionString = null;
 
 FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 IDictionary<string, string> config = new Dictionary<string, string>();
-ConfigurationService configService = new ConfigurationService();
 
 try
 {
@@ -21,21 +20,20 @@ try
     if (showHelp)
     {
         ShowHelp();
-        exitCode = 0;
     }
     else
     {
         Validate();
 
-        var db = await DatabaseFactory.CreateAsync(connectionString!);
+        var db = await Shibusa.DevTools.Infrastructure.MsSqlServer.DatabaseFactory.CreateAsync(connectionString!);
 
         await GenerateReportAsync<DependencyReport>(db, outputDirectory!, overwriteFiles);
         await GenerateReportAsync<TablesReport>(db, outputDirectory!, overwriteFiles);
         await GenerateReportAsync<ViewsReport>(db, outputDirectory!, overwriteFiles);
         await GenerateReportAsync<RoutinesReport>(db, outputDirectory!, overwriteFiles);
-
-        exitCode = 0;
     }
+
+    exitCode = 0;
 }
 catch (Exception exc)
 {
@@ -103,6 +101,16 @@ async Task HandleArgumentsAsync(string[] args)
                 throw new ArgumentException($"Unknown argument: {args[a]}");
         }
     }
+
+    if (!string.IsNullOrWhiteSpace(connectionString) && config.ContainsKey(connectionString))
+    {
+        connectionString = config[connectionString!];
+    }
+
+    if (!string.IsNullOrWhiteSpace(outputDirectory) && config.ContainsKey(outputDirectory))
+    {
+        outputDirectory = config[outputDirectory!];
+    }
 }
 
 void ShowHelp(string? message = null)
@@ -117,6 +125,7 @@ void ShowHelp(string? message = null)
         { "{--connection-string | -c} <connection string>","Define the connection string." },
         { "{--output-directory | -d} <directory>]","Define the output directory." },
         { "[--overwrite | -o]","Overwrite output files if they exists." },
+        { "[--config-file <path>]","Use specified configuration file. Passed by default from CLI caller."},
         { "[-h|--help|?|-?]", "Show this help." }
     };
 

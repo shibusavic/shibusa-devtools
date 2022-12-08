@@ -2,7 +2,7 @@
 
 namespace Shibusa.DevTools.AppServices
 {
-    public class ConfigurationService
+    public static class ConfigurationService
     {
         public static class Keys
         {
@@ -10,6 +10,7 @@ namespace Shibusa.DevTools.AppServices
             public const string CsProjects = "cs";
             public const string Sql = "sql";
             public const string Config = "config";
+            public const string CsGen = "gen";
 
             public static IEnumerable<string> GetAll()
             {
@@ -48,12 +49,14 @@ namespace Shibusa.DevTools.AppServices
             throw new Exception($"Unable to deserialize configuration file: {fileInfo.FullName}");
         }
 
-        public static async Task SaveConfigurationFileAsync(IDictionary<string, Dictionary<string, string>> configDictionary, FileInfo configFileInfo)
+        public static Task SaveConfigurationFileAsync(
+            IDictionary<string, Dictionary<string, string>> configDictionary,
+            FileInfo configFileInfo)
         {
             UpdateDictionary(configDictionary);
             var json = JsonSerializer.Serialize(configDictionary, serializerOptions);
             if (json == null) { throw new ArgumentException($"{nameof(configDictionary)} could not be serialized."); }
-            await File.WriteAllTextAsync(configFileInfo.FullName, json);
+            return File.WriteAllTextAsync(configFileInfo.FullName, json);
         }
 
         private static void UpdateDictionary(IDictionary<string, Dictionary<string, string>> dictionary)

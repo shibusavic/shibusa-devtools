@@ -1,10 +1,11 @@
 ﻿using Dapper;
+using Shibusa.DevTools.Infrastructure.Schemas;
 using System.Data.SqlClient;
 
-namespace Shibusa.DevTools.Infrastructure.Schemas
+namespace Shibusa.DevTools.Infrastructure.MsSqlServer
 {
     /// <summary>
-    /// A factory for constructing <see cref="Database"/> objects.
+    /// A factory for constructing <see cref="Database"/> objects from an MS Sql Server database.
     /// </summary>
     public static class DatabaseFactory
     {
@@ -16,7 +17,8 @@ namespace Shibusa.DevTools.Infrastructure.Schemas
         /// <param name="includeViews">An indicator of whether to include views.</param>
         /// <param name="includeRoutines">An indicator of whether to include routines.</param>
         /// <param name="includeForeignKeys">An indicator of whether to include foreign keys.</param>
-        /// <returns></returns>
+        /// <returns>A task representing the asyncronous operation; the task contains a
+        /// <see cref="Database"/> instance.</returns>
         public static async Task<Database> CreateAsync(string connectionString,
             bool includeTables = true,
             bool includeViews = true,
@@ -50,9 +52,14 @@ namespace Shibusa.DevTools.Infrastructure.Schemas
 
             foreach (var (schema, name) in tableNames)
             {
-                string columnSql = $"{GET_COLUMNS_SQL} WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{name}' ORDER BY ORDINAL_POSITION";
+                string columnSql = $"{GET_COLUMNS_SQL} WHERE TABLE_SCHEMA = @Schema AND TABLE_NAME = @Name ORDER BY ORDINAL_POSITION";
 
-                var columns = await connection.QueryAsync<Column>(columnSql);
+                var columns = await connection.QueryAsync<Column>(columnSql,
+                    new
+                    {
+                        Schema = schema,
+                        Name = name
+                    });
 
                 tables.Add(new Table(schema, name, columns));
             }
@@ -100,9 +107,13 @@ namespace Shibusa.DevTools.Infrastructure.Schemas
         {
             using var connection = new SqlConnection(connectionString);
 
-            string columnSql = $"{GET_COLUMNS_SQL} WHERE TABLE_SCHEMA = '{schema}' AND TABLE_NAME = '{name}' ORDER BY ORDINAL_POSITION";
+            string columnSql = $"{GET_COLUMNS_SQL} WHERE TABLE_SCHEMA = @Schema AND TABLE_NAME = @Name ORDER BY ORDINAL_POSITION";
 
-            var columns = await connection.QueryAsync<Column>(columnSql);
+            var columns = await connection.QueryAsync<Column>(columnSql, new
+            {
+                Schema = schema,
+                Name = name
+            });
 
             if (columns.Any())
             {
