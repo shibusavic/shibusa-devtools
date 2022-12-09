@@ -5,10 +5,10 @@ using System.Reflection;
 bool showHelp = false;
 int exitCode = -1;
 string outputDirectory = Path.GetTempPath();
-DirectoryInfo outputDirInfo = new DirectoryInfo(outputDirectory);
+DirectoryInfo outputDirInfo = new(outputDirectory);
 
 string? connectionString = null;
-SortedSet<string> tables = new SortedSet<string>();
+SortedSet<string> tables = new();
 DatabaseEngine dbEngine = DatabaseEngine.None;
 
 FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
@@ -155,7 +155,7 @@ try
         //    }
     }
 
-    Console.WriteLine($"output: {outputDirectory.Ful}");
+
     exitCode = 0;
 }
 catch (Exception exc)

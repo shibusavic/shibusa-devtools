@@ -51,13 +51,13 @@ namespace Shibusa.DevTools.Infrastructure.Tests
         {
             List<Column> columns = new()
             {
-                new Column(schema, "Id", 1, null, false, "Int", 0, 0),
-                new Column(schema, "Name", 2, null, false, "VarChar", 50, 0)
+                new Column(schema, "Id", 1, null, false, "Int", 0, 0, true),
+                new Column(schema, "Name", 2, null, false, "VarChar", 50, 0, false)
             };
 
             if (fkColumn != null && fkTableName != null)
             {
-                columns.Add(new Column(schema, "FK", 3, null, false, "Int", 0, 0));
+                columns.Add(new Column(schema, "FK", 3, null, false, "Int", 0, 0, false));
             }
 
             return new Table(schema, name, columns);

@@ -23,7 +23,8 @@
             bool isNullable,
             string dataType,
             int maxLength,
-            byte numericPrecision) : base(schema, name)
+            byte numericPrecision,
+            bool isPrimaryKey) : base(schema, name)
         {
             OrdinalPosition = ordinalPosition;
             ColumnDefault = columnDefault;
@@ -31,6 +32,7 @@
             DataType = dataType;
             MaxLength = maxLength;
             NumericPrecision = numericPrecision;
+            IsPrimaryKey = isPrimaryKey;
         }
 
         /// <summary>
@@ -64,6 +66,11 @@
         public byte NumericPrecision { get; }
 
         /// <summary>
+        /// Gets an indicator of whether this is a primary key.
+        /// </summary>
+        public bool IsPrimaryKey { get; }
+
+        /// <summary>
         /// Determines whether the specified object is equal to the current object.
         /// </summary>
         /// <param name="obj">The object to compare with the current object.</param>
@@ -87,7 +94,9 @@
                    IsNullable == other.IsNullable &&
                    DataType == other.DataType &&
                    MaxLength == other.MaxLength &&
-                   NumericPrecision == other.NumericPrecision;
+                   NumericPrecision == other.NumericPrecision &&
+                   IsPrimaryKey == other.IsPrimaryKey;
+
         }
 
         /// <summary>
@@ -96,7 +105,7 @@
         /// <returns>A hash code for the current object.</returns>
         public override int GetHashCode()
         {
-            return HashCode.Combine(base.GetHashCode(), OrdinalPosition, ColumnDefault, IsNullable, DataType, MaxLength, NumericPrecision);
+            return HashCode.Combine(base.GetHashCode(), OrdinalPosition, ColumnDefault, IsNullable, DataType, MaxLength, NumericPrecision, IsPrimaryKey);
         }
     }
 }
