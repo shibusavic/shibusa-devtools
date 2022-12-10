@@ -1,5 +1,5 @@
 ﻿using Shibusa.DevTools.AppServices;
-using Shibusa.DevTools.Infrastructure.Schemas;
+using Shibusa.DevTools.Infrastructure.Abstractions;
 using Shibusa.Extensions;
 using System.Reflection;
 
@@ -12,6 +12,7 @@ string? ns = "NamespaceName";
 string? connectionString = null;
 SortedSet<string> tables = new();
 DatabaseEngine dbEngine = DatabaseEngine.None;
+CodeGenerationConfiguration codeGenerationConfiguration = new();
 
 FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 
@@ -19,7 +20,7 @@ IDictionary<string, string> config = new Dictionary<string, string>();
 
 try
 {
-    await HandleArgumentsAsync(args);
+    await StartupAsync(args);
 
     if (showHelp)
     {
@@ -27,11 +28,16 @@ try
     }
     else
     {
-        Database? database = null;
-        if (dbEngine == DatabaseEngine.Postgres)
-        {
-            //database = await Shibusa.DevTools.Infrastructure.PostgreSQL.DatabaseFactory.CreateAsync(connectionString!);
-        }
+        IDatabaseFactory factory = dbEngine == DatabaseEngine.Postgres
+            ? new Shibusa.DevTools.Infrastructure.PostgreSQL.DatabaseFactory()
+            : throw new Exception("Only PostgreSQL is supported right now.");
+
+        var database = await factory.CreateAsync(connectionString!, includeTables: true, false, false, false);
+
+        CancellationTokenSource cts = new CancellationTokenSource();
+
+        Task<Task<string>>[] tasks = new Task<Task<string>>[database.Tables.Count];
+        int taskIndex = 0;
 
         if (database != null)
         {
@@ -46,137 +52,21 @@ try
             {
                 foreach (var table in database.Tables)
                 {
-                    Console.WriteLine(table.Name);
+                    tasks[taskIndex++] = Task.Factory.StartNew(() =>
+                        CodeGenerationService.GenerateFromTableAsync(codeGenerationConfiguration, table));
                 }
             }
         }
-        //    DirectoryInfo directoryInfo = new(inputDirectory);
 
-        //    if (!directoryInfo.Exists) throw new ArgumentException("Bad directory.");
+        var finalTask = Task.Factory.ContinueWhenAll(tasks, completedTasks =>
+        {
+            for (int i = 0; i < completedTasks.Length; i++)
+            {
+                Console.WriteLine(completedTasks.ElementAt(i).Result.Result);
+            }
+        });
 
-        //    var csProjFiles = directoryInfo.GetFiles("*.csproj", SearchOption.AllDirectories);
-
-        //    var fileCollection = new List<CodeProjectFile>();
-        //    //var collection = new ProjectCollection();
-
-        //    foreach (var file in csProjFiles)
-        //    {
-        //        fileCollection.Add(new CodeProjectFile(file));
-        //    }
-
-        //    SortedSet<CodeReference> codeReferenceSet = new();
-
-        //    foreach (var item in fileCollection)
-        //    {
-        //        codeReferenceSet.Add(new CodeReference(item.Name, CodeReferenceType.Project, null, 0));
-
-        //        int pos = 0;
-        //        foreach (var projectRef in item.ProjectReferences)
-        //        {
-        //            codeReferenceSet.Add(new CodeReference(projectRef, CodeReferenceType.Project, null, pos++));
-        //        }
-
-        //        pos = 0;
-        //        foreach (var nugetRef in item.PackageReferences)
-        //        {
-        //            codeReferenceSet.Add(new CodeReference(nugetRef.Package, CodeReferenceType.NuGet, nugetRef.Version, pos++));
-        //        }
-        //    }
-
-        //    List<CodeReference> copy = new List<CodeReference>(codeReferenceSet);
-
-        //    foreach (var item in copy)
-        //    {
-        //        var matchingItem = codeReferenceSet.FirstOrDefault(c => c.Name == item.Name && c.CodeReferenceType == item.CodeReferenceType);
-        //        Debug.Assert(matchingItem != null);
-
-        //        var matchingFileItem = fileCollection.FirstOrDefault(f => f.Name == item.Name);
-
-        //        if (matchingFileItem != null)
-        //        {
-        //            foreach (var projectRef in matchingFileItem.ProjectReferences)
-        //            {
-        //                var matchingRef = codeReferenceSet.FirstOrDefault(c => c.Name == projectRef);
-
-        //                if (matchingRef != null && !matchingItem.Children.Contains(matchingRef))
-        //                {
-        //                    matchingItem.Children.Add(matchingRef);
-        //                }
-        //            }
-
-        //            foreach (var nugetRef in matchingFileItem.PackageReferences)
-        //            {
-        //                var matchingRef = codeReferenceSet.FirstOrDefault(c => c.Name == nugetRef.Package &&
-        //                    c.Version == new Shibusa.DevTools.CsProjects.Cli.Version(nugetRef.Version));
-
-        //                if (matchingRef != null && !matchingItem.Children.Contains(matchingRef))
-        //                {
-        //                    matchingItem.Children.Add(matchingRef);
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    bool change;
-
-        //    do
-        //    {
-        //        change = false;
-        //        var projects = codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project)
-        //            .OrderBy(c => c.OrdinalPosition).ToArray();
-
-        //        foreach (var project in projects.ToArray())
-        //        {
-        //            foreach (var child in project.Children.ToArray())
-        //            {
-        //                if (project.OrdinalPosition <= child.OrdinalPosition)
-        //                {
-        //                    var match = codeReferenceSet.FirstOrDefault(c => c.GetHashCode() == project.GetHashCode());
-        //                    if (match != null)
-        //                    {
-        //                        match.OrdinalPosition = Math.Max(match.OrdinalPosition, child.OrdinalPosition + 1);
-        //                        change = true;
-        //                    }
-        //                }
-        //            }
-        //        }
-        //    }
-        //    while (change);
-
-
-        //    foreach (var item in codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project)
-        //        .OrderBy(c => c.OrdinalPosition))
-        //    {
-        //        Console.WriteLine(item);
-        //        foreach (var child in item.Children.OrderBy(c => c.CodeReferenceType).ThenBy(c => c.OrdinalPosition))
-        //        {
-        //            Console.WriteLine($"\t{child}");
-        //        }
-        //    }
-
-        //    Console.WriteLine();
-
-        //    HashSet<string> messages = new();
-        //    foreach (var project in codeReferenceSet.Where(c => c.CodeReferenceType == CodeReferenceType.Project &&
-        //        c.Children.Count > 1).OrderBy(c => c.OrdinalPosition))
-        //    {
-        //        foreach (var child in project.Children)
-        //        {
-        //            var siblings = project.Children.Except(new[] { child });
-        //            foreach (var sibling in siblings)
-        //            {
-        //                if (sibling.ContainsInChain(child.Name))
-        //                {
-        //                    messages.Add($"{project}: Remove ref to {child}");
-        //                }
-        //            }
-        //        }
-        //    }
-
-        //    foreach (var message in messages)
-        //    {
-        //        Console.WriteLine(message);
-        //    }
+        finalTask.Wait();
     }
 
 
@@ -193,7 +83,7 @@ finally
     Environment.Exit(exitCode);
 }
 
-async Task HandleArgumentsAsync(string[] args)
+async Task StartupAsync(string[] args)
 {
     int pos = Array.IndexOf(args, "--config-file");
     if (pos < 0)
@@ -206,6 +96,14 @@ async Task HandleArgumentsAsync(string[] args)
         configFileInfo = new FileInfo(args[pos + 1]);
         config = (await ConfigurationService.GetConfigurationAsync(configFileInfo))[ConfigurationService.Keys.CsGen];
     }
+
+    bool useStructs = false;
+    bool useClasses = false;
+    bool useFields = false;
+    bool includeDbAttributes = false;
+    bool usePropertyGetters = false;
+    bool usePropertySetters = false;
+    bool generateConstructor = false;
 
     for (int a = 0; a < args.Length; a++)
     {
@@ -234,9 +132,10 @@ async Task HandleArgumentsAsync(string[] args)
             case "--tables":
             case "--table":
             case "-t":
-                if (a > args.Length - 1) { throw new ArgumentException($"Expecting one or more table names after {args[a]}; try '-t public.users,public.permissions'"); }
-                ProcessTables(args[++a]);
-                break;
+                throw new ArgumentException($"The {args[a]} is not supported currently.");
+            //if (a > args.Length - 1) { throw new ArgumentException($"Expecting one or more table names after {args[a]}; try '-t public.users,public.permissions'"); }
+            //ProcessTables(args[++a]);
+            //break;
             case "--database-engine":
             case "--db":
             case "-d":
@@ -252,6 +151,43 @@ async Task HandleArgumentsAsync(string[] args)
             case "-n":
                 if (a > args.Length - 1) { throw new ArgumentException($"Expecting the namespace after {args[a]}; try '-n MyCompany.MyProject'"); }
                 ns = args[++a];
+                break;
+            case "--use-structs":
+            case "--structs":
+            case "--struct":
+                useStructs = true;
+                break;
+            case "--use-classes":
+            case "--classes":
+            case "--class":
+                useClasses = true;
+                break;
+            case "--use-fields":
+            case "--fields":
+            case "--field":
+                useFields = true;
+                break;
+            case "--include-attributes":
+            case "--attributes":
+            case "--attribute":
+                includeDbAttributes = true;
+                break;
+            case "--use-property-getters":
+            case "--property-getters":
+                usePropertyGetters = true;
+                break;
+            case "--use-property-setters":
+            case "--property-setters":
+                usePropertySetters = true;
+                break;
+            case "--properties":
+            case "--property":
+                usePropertyGetters = true;
+                usePropertySetters = true;
+                break;
+            case "--generate-constructor":
+            case "--constructor":
+                generateConstructor = true;
                 break;
             case "--config-file":
                 a++;
@@ -288,15 +224,11 @@ async Task HandleArgumentsAsync(string[] args)
         throw new ArgumentException($"Connection string is required; use -c \"<connection string>\"");
     }
 
-    if (tables.Any())
-    {
-        var copy = tables.Where(config.ContainsKey).ToArray();
-        foreach (var table in copy)
-        {
-            tables.Remove(table);
-            ProcessTables(config[table]);
-        }
-    }
+    if (!useStructs && !useClasses) { useClasses = true; }
+    if (!useFields && !usePropertyGetters && !usePropertySetters) { usePropertyGetters = true; }
+
+    codeGenerationConfiguration = new(directoryInfo: outputDirInfo,
+        useStructs, useClasses, useFields, includeDbAttributes, usePropertyGetters, usePropertySetters, generateConstructor, ns);
 }
 
 void ShowHelp(string? message = null)
@@ -311,8 +243,16 @@ void ShowHelp(string? message = null)
         { "-c | --connection-string | --connection <connection string>","Define the connection string." },
         { "-o | --output-directory | --out-dir <directory>]","Define the output directory." },
         { "-n | --ns | --namespace <namespace>","Set the C# namespace in the output files."},
-        { "-t | --table[s] <comma separated table list>","Generate only the specified tables."},
+        //{ "-t | --table[s] <comma separated table list>","Generate only the specified tables."},
         { "[-d | --db | --database-engine <name of engine>]","Provide engine for connection string."},
+        { "[--struct[s] | --use-structs]","Generate structs instead of classes."},
+        { "[--class[es] | --use-classes]","Generate classes. This is the default."},
+        { "[--field[s] | --use-fields","Generate fields instead of properties."},
+        { "[--property-getters | --use-property-getters","Generate properties with getters."},
+        { "[--property-setters | --use-property-setters","Generate properties with setters."},
+        { "[--properties","Generate properties with both getters and setters."},
+        { "[--constructor | --generate-constructor","Generate a constructor."},
+        { "[--attribute[s] | --include-attributes]","Add Data Schema attributes to the generated structs/classes."},
         { "[--config-file <path>]","Use specified configuration file. Passed by default from CLI caller."},
         { "[-h|--help|?|-?]", "Show this help." }
     };
@@ -338,14 +278,14 @@ void ShowHelp(string? message = null)
     }
 }
 
-void ProcessTables(string tablesText)
-{
-    if (!string.IsNullOrWhiteSpace(tablesText))
-    {
-        var split = tablesText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
-        foreach (var table in split)
-        {
-            tables.Add(table);
-        }
-    }
-}
+//void ProcessTables(string tablesText)
+//{
+//    if (!string.IsNullOrWhiteSpace(tablesText))
+//    {
+//        var split = tablesText.Split(',', StringSplitOptions.TrimEntries | StringSplitOptions.RemoveEmptyEntries);
+//        foreach (var table in split)
+//        {
+//            tables.Add(table);
+//        }
+//    }
+//}

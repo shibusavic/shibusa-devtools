@@ -1,19 +1,10 @@
-﻿using Shibusa.DevTools.Infrastructure.Abstractions;
-using Shibusa.DevTools.Infrastructure.Schemas;
-using System.ComponentModel.DataAnnotations.Schema;
+﻿using Shibusa.DevTools.Infrastructure.Schemas;
 
 namespace Shibusa.DevTools.AppServices;
 
-public class CodeGenerationService
+public static class CodeGenerationService
 {
-    private readonly IDatabaseFactory databaseFactory;
-
-    public CodeGenerationService(IDatabaseFactory databaseFactory)
-    {
-        this.databaseFactory = databaseFactory;
-    }
-
-    public async Task<string> GenerateFromTableAsync(CodeGenerationConfiguration configuration, Table table)
+    public static async Task<string> GenerateFromTableAsync(CodeGenerationConfiguration configuration, Table table)
     {
         List<string> collection = new();
 
@@ -26,7 +17,7 @@ public class CodeGenerationService
                     collection.Add(Transformations.TransformRawText.TransformPounds(FieldTemplateWithAttribute,
                         new Dictionary<string, string>() {
                             { "field-type", ConvertColumnTypeToCSharpType(col.Value.DataType, col.Value.IsNullable)},
-                            { "field-name", ConvertDbNameToCSharpPublicName(col.Value.Name) },
+                            { "field-name", ConvertToCsPublicName(col.Value.Name) },
                             { "col-name", col.Value.Name},
                             { "col-order", col.Value.OrdinalPosition.ToString()},
                             { "col-type-name", col.Value.DataType }
@@ -37,7 +28,7 @@ public class CodeGenerationService
                     collection.Add(Transformations.TransformRawText.TransformPounds(FieldTemplate,
                         new Dictionary<string, string>() {
                             { "field-type", ConvertColumnTypeToCSharpType(col.Value.DataType, col.Value.IsNullable)},
-                            { "field-name", ConvertDbNameToCSharpPublicName(col.Value.Name) }
+                            { "field-name", ConvertToCsPublicName(col.Value.Name) }
                         }, true));
                 }
 
@@ -50,7 +41,7 @@ public class CodeGenerationService
                         new Dictionary<string, string>
                         {
                             { "prop-type", ConvertColumnTypeToCSharpType(col.Value.DataType, col.Value.IsNullable) },
-                            { "prop-name", ConvertDbNameToCSharpPublicName(col.Value.Name) },
+                            { "prop-name", ConvertToCsPublicName(col.Value.Name) },
                             { "prop-get", configuration.UsePropertyGetters ? "get;" : "" },
                             { "prop-set", configuration.UsePropertySetters ? "set;" : "" },
                             { "col-name", col.Value.Name},
@@ -64,7 +55,7 @@ public class CodeGenerationService
                         new Dictionary<string, string>
                         {
                             { "prop-type", ConvertColumnTypeToCSharpType(col.Value.DataType, col.Value.IsNullable) },
-                            { "prop-name", ConvertDbNameToCSharpPublicName(col.Value.Name) },
+                            { "prop-name", ConvertToCsPublicName(col.Value.Name) },
                             { "prop-get", configuration.UsePropertyGetters ? "get;" : "" },
                             { "prop-set", configuration.UsePropertySetters ? "set;" : "" }
                         }, true));
@@ -76,20 +67,17 @@ public class CodeGenerationService
         {
             { "namespace", configuration.Namespace },
             { "object-type", configuration.UseStructs ? "struct" : "class"},
-            { "object-name", ConvertDbNameToCSharpPublicName(table.Name)},
+            { "object-name", ConvertToCsPublicName(table.Name)},
             { "object-constructor", GenerateConstructor(table)},
             { "object-body", string.Join(Environment.NewLine, collection)},
-            { "table-attribute", ""}
+            { "object-usings", configuration.IncludeDbAttributes
+                ? "using System.ComponentModel.DataAnnotations.Schema;" : "" },
+            { "table-attribute", configuration.IncludeDbAttributes ? TableAttribute : ""},
+            { "table-name", table.Name},
+            { "table-schema", table.Schema}
         };
 
-        if (configuration.IncludeDbAttributes)
-        {
-            templateKeys["table-attribute"] = TableAttribute;
-            templateKeys.Add("table-name", table.Name);
-            templateKeys.Add("table-schema", table.Schema);
-        }
-
-        var fileName = Path.Combine(configuration.DirectoryInfo.FullName, $"{ConvertDbNameToCSharpPublicName(table.Name)}.cs");
+        var fileName = Path.Combine(configuration.DirectoryInfo.FullName, $"{ConvertToCsPublicName(table.Name)}.cs");
 
         await File.WriteAllTextAsync(fileName, Transformations.TransformRawText.TransformPounds(ObjectTemplate,
             templateKeys, true));
@@ -97,34 +85,34 @@ public class CodeGenerationService
         return fileName;
     }
 
-    private string GenerateConstructor(Table table)
+    private static string GenerateConstructor(Table table)
     {
         return Transformations.TransformRawText.TransformPounds(CtorTemplate, new Dictionary<string, string>()
         {
             { "parm-list", string.Join($",{Environment.NewLine}", GenerateParameterList(table))},
             { "prop-setter", string.Join($"{Environment.NewLine}", GenerateParameterSetList(table))},
-            { "object-name", ConvertDbNameToCSharpPublicName(table.Name)},
+            { "object-name", ConvertToCsPublicName(table.Name)},
         }, true);
     }
 
-    private IEnumerable<string> GenerateParameterList(Table table)
+    private static IEnumerable<string> GenerateParameterList(Table table)
     {
         foreach (var col in table.Columns)
         {
             yield return $"{GetTabs(3)}{ConvertColumnTypeToCSharpType(col.Value.DataType,
-                col.Value.IsNullable)} {ConvertDbNameToCSharpPrivateName(col.Value.Name)}";
+                col.Value.IsNullable)} {ConvertToCsPrivateName(col.Value.Name)}";
         }
     }
 
-    private IEnumerable<string> GenerateParameterSetList(Table table)
+    private static IEnumerable<string> GenerateParameterSetList(Table table)
     {
         foreach (var col in table.Columns)
         {
-            yield return $"{GetTabs(3)}{ConvertDbNameToCSharpPublicName(col.Value.Name)} = {ConvertDbNameToCSharpPrivateName(col.Value.Name)};";
+            yield return $"{GetTabs(3)}{ConvertToCsPublicName(col.Value.Name)} = {ConvertToCsPrivateName(col.Value.Name)};";
         }
     }
 
-    private string ConvertColumnTypeToCSharpType(string type, bool isNullable)
+    private static string ConvertColumnTypeToCSharpType(string type, bool isNullable)
     {
         string convertedType = type.ToLowerInvariant() switch
         {
@@ -145,7 +133,7 @@ public class CodeGenerationService
         return $"{convertedType}{(isNullable ? "?" : "")}";
     }
 
-    private string ConvertDbNameToCSharpPublicName(string name)
+    private static string ConvertToCsPublicName(string name)
     {
         List<char> chars = new();
 
@@ -172,7 +160,7 @@ public class CodeGenerationService
         return new string(chars.ToArray());
     }
 
-    private string ConvertDbNameToCSharpPrivateName(string name)
+    private static string ConvertToCsPrivateName(string name)
     {
         List<char> chars = new();
 
@@ -200,8 +188,8 @@ public class CodeGenerationService
     }
 
 
-    private const string ObjectTemplate = @"
-using namespace #namespace#
+    private const string ObjectTemplate = @"#object-usings#
+namespace #namespace#
 {
 #table-attribute#
     internal #object-type# #object-name#
@@ -212,22 +200,22 @@ using namespace #namespace#
 }
 ";
 
-    private string CtorTemplate = $@"{GetTabs(2)}public #object-name#(
+    private static readonly string CtorTemplate = $@"{GetTabs(2)}public #object-name#(
 #parm-list#)
 {GetTabs(2)}{{
 #prop-setter#
 {GetTabs(2)}}}
 ";
 
-    private string TableAttribute => $"{GetTabs(1)}[Table(name: \"#table-name#\", Schema = \"#table-schema#\")]";
+    private static string TableAttribute => $"{GetTabs(1)}[Table(name: \"#table-name#\", Schema = \"#table-schema#\")]";
 
-    private string PropertyTemplateWithAttribute => $"{GetTabs(2)}[Column(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\")]{Environment.NewLine}{PropertyTemplate}";
+    private static string PropertyTemplateWithAttribute => $"{Environment.NewLine}{GetTabs(2)}[Column(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\")]{PropertyTemplate}";
 
-    private string PropertyTemplate => $"{GetTabs(2)}public #prop-type# #prop-name# {{ #prop-get# #prop-set# }}";
+    private static string PropertyTemplate => $"{Environment.NewLine}{GetTabs(2)}public #prop-type# #prop-name# {{ #prop-get# #prop-set# }}";
 
-    private string FieldTemplateWithAttribute => $"{GetTabs(2)}[Column(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\")]{Environment.NewLine}{FieldTemplate}";
+    private static string FieldTemplateWithAttribute => $"{Environment.NewLine}{GetTabs(2)}[Column(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\")]{FieldTemplate}";
 
-    private string FieldTemplate => $"{GetTabs(2)}public #field-type# #field-name#;";
+    private static string FieldTemplate => $"{Environment.NewLine}{GetTabs(2)}public #field-type# #field-name#;";
 
     private const int SizeOfTabs = 4;
 
