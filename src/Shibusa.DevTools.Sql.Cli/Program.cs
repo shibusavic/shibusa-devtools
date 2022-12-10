@@ -10,7 +10,7 @@ string? outputDirectory = null;
 bool overwriteFiles = false;
 string? connectionString = null;
 
-FileInfo configFileInfo = new FileInfo(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
+FileInfo configFileInfo = new(Path.Combine(Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location) ?? "", ".config"));
 IDictionary<string, string> config = new Dictionary<string, string>();
 
 try
@@ -25,12 +25,12 @@ try
     {
         Validate();
 
-        var db = await Shibusa.DevTools.Infrastructure.MsSqlServer.DatabaseFactory.CreateAsync(connectionString!);
+        //var db = await Shibusa.DevTools.Infrastructure.MsSqlServer.DatabaseFactory.CreateAsync(connectionString!);
 
-        await GenerateReportAsync<DependencyReport>(db, outputDirectory!, overwriteFiles);
-        await GenerateReportAsync<TablesReport>(db, outputDirectory!, overwriteFiles);
-        await GenerateReportAsync<ViewsReport>(db, outputDirectory!, overwriteFiles);
-        await GenerateReportAsync<RoutinesReport>(db, outputDirectory!, overwriteFiles);
+        //await GenerateReportAsync<DependencyReport>(db, outputDirectory!, overwriteFiles);
+        //await GenerateReportAsync<TablesReport>(db, outputDirectory!, overwriteFiles);
+        //await GenerateReportAsync<ViewsReport>(db, outputDirectory!, overwriteFiles);
+        //await GenerateReportAsync<RoutinesReport>(db, outputDirectory!, overwriteFiles);
     }
 
     exitCode = 0;

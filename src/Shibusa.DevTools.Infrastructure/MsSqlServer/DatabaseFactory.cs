@@ -1,4 +1,5 @@
 ﻿using Dapper;
+using Shibusa.DevTools.Infrastructure.Abstractions;
 using Shibusa.DevTools.Infrastructure.Schemas;
 using System.Data.SqlClient;
 
@@ -7,7 +8,7 @@ namespace Shibusa.DevTools.Infrastructure.MsSqlServer
     /// <summary>
     /// A factory for constructing <see cref="Database"/> objects from an MS Sql Server database.
     /// </summary>
-    public static class DatabaseFactory
+    public class DatabaseFactory : IDatabaseFactory
     {
         /// <summary>
         /// Create an instance of the <see cref="Database"/> object representing the database of the provided connection string.
@@ -19,7 +20,7 @@ namespace Shibusa.DevTools.Infrastructure.MsSqlServer
         /// <param name="includeForeignKeys">An indicator of whether to include foreign keys.</param>
         /// <returns>A task representing the asyncronous operation; the task contains a
         /// <see cref="Database"/> instance.</returns>
-        public static async Task<Database> CreateAsync(string connectionString,
+        public async Task<Database> CreateAsync(string connectionString,
             bool includeTables = true,
             bool includeViews = true,
             bool includeRoutines = true,
@@ -41,13 +42,13 @@ namespace Shibusa.DevTools.Infrastructure.MsSqlServer
             return connection.Database;
         }
 
-        private static async Task<IEnumerable<Table>> GetTablesAsync(string connectionString)
+        private async Task<IEnumerable<Table>> GetTablesAsync(string connectionString)
         {
             List<Table> tables = new();
             string tableSql = $"{GET_TABLES_SQL} WHERE TABLE_NAME <> 'sysdiagrams' AND TABLE_TYPE = 'BASE TABLE' ORDER BY [TABLE_SCHEMA], [TABLE_NAME]";
 
             using var connection = new SqlConnection(connectionString);
-
+            await connection.OpenAsync();
             var tableNames = await connection.QueryAsync<(string schema, string name)>(tableSql);
 
             foreach (var (schema, name) in tableNames)
@@ -66,7 +67,7 @@ namespace Shibusa.DevTools.Infrastructure.MsSqlServer
             return tables;
         }
 
-        private static async Task<IEnumerable<ForeignKey>> GetForeignKeysAsync(string connectionString)
+        private async Task<IEnumerable<ForeignKey>> GetForeignKeysAsync(string connectionString)
         {
             List<ForeignKey> foreignKeys = new();
 
@@ -89,23 +90,25 @@ namespace Shibusa.DevTools.Infrastructure.MsSqlServer
             return foreignKeys;
         }
 
-        private static async Task<IEnumerable<View>> GetViewsAsync(string connectionString)
+        private async Task<IEnumerable<View>> GetViewsAsync(string connectionString)
         {
             string viewSql = $"{GET_VIEWS_SQL} ORDER BY TABLE_SCHEMA, TABLE_NAME";
             using var connection = new SqlConnection(connectionString);
             return await connection.QueryAsync<View>(viewSql);
         }
 
-        private static async Task<IEnumerable<Routine>> GetRoutinesAsync(string connectionString)
+        private async Task<IEnumerable<Routine>> GetRoutinesAsync(string connectionString)
         {
             string routineSql = $"{GET_ROUTINES_SQL} ORDER BY ROUTINE_SCHEMA, ROUTINE_NAME";
             using var connection = new SqlConnection(connectionString);
             return await connection.QueryAsync<Routine>(routineSql);
         }
 
-        private static async Task<Table?> GetTableAsync(string connectionString, string schema, string name)
+        private async Task<Table?> GetTableAsync(string connectionString, string schema, string name)
         {
             using var connection = new SqlConnection(connectionString);
+
+            await connection.OpenAsync();
 
             string columnSql = $"{GET_COLUMNS_SQL} WHERE C.TABLE_SCHEMA = @Schema AND C.TABLE_NAME = @Name ORDER BY ORDINAL_POSITION";
 
@@ -143,7 +146,6 @@ END AS BIT) AS ISNULLABLE,
 C.DATA_TYPE AS DATATYPE,
 C.CHARACTER_MAXIMUM_LENGTH AS MAXLENGTH,
 C.NUMERIC_PRECISION AS NUMERICPRECISION,
---T.CONSTRAINT_TYPE
 CAST(CASE T.CONSTRAINT_TYPE
 WHEN 'PRIMARY KEY' THEN 1
 ELSE 0

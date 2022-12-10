@@ -1,4 +1,5 @@
 ﻿using Shibusa.DevTools.AppServices;
+using Shibusa.DevTools.Infrastructure.Schemas;
 using Shibusa.Extensions;
 using System.Reflection;
 
@@ -6,6 +7,7 @@ bool showHelp = false;
 int exitCode = -1;
 string outputDirectory = Path.GetTempPath();
 DirectoryInfo outputDirInfo = new(outputDirectory);
+string? ns = "NamespaceName";
 
 string? connectionString = null;
 SortedSet<string> tables = new();
@@ -25,7 +27,29 @@ try
     }
     else
     {
+        Database? database = null;
+        if (dbEngine == DatabaseEngine.Postgres)
+        {
+            //database = await Shibusa.DevTools.Infrastructure.PostgreSQL.DatabaseFactory.CreateAsync(connectionString!);
+        }
 
+        if (database != null)
+        {
+            if (tables.Any())
+            {
+                foreach (var table in tables)
+                {
+                    Console.WriteLine(database.Tables.FirstOrDefault(t => t.Name == table)?.Name);
+                }
+            }
+            else
+            {
+                foreach (var table in database.Tables)
+                {
+                    Console.WriteLine(table.Name);
+                }
+            }
+        }
         //    DirectoryInfo directoryInfo = new(inputDirectory);
 
         //    if (!directoryInfo.Exists) throw new ArgumentException("Bad directory.");
@@ -223,6 +247,12 @@ async Task HandleArgumentsAsync(string[] args)
                     throw new ArgumentException($"Could not parse {args[a]} as a database engine.");
                 }
                 break;
+            case "--namespace":
+            case "--ns":
+            case "-n":
+                if (a > args.Length - 1) { throw new ArgumentException($"Expecting the namespace after {args[a]}; try '-n MyCompany.MyProject'"); }
+                ns = args[++a];
+                break;
             case "--config-file":
                 a++;
                 break;
@@ -248,6 +278,16 @@ async Task HandleArgumentsAsync(string[] args)
 
     outputDirInfo = new(outputDirectory);
 
+    if (!outputDirInfo.Exists)
+    {
+        outputDirInfo.Create();
+    }
+
+    if (string.IsNullOrWhiteSpace(connectionString))
+    {
+        throw new ArgumentException($"Connection string is required; use -c \"<connection string>\"");
+    }
+
     if (tables.Any())
     {
         var copy = tables.Where(config.ContainsKey).ToArray();
@@ -270,6 +310,7 @@ void ShowHelp(string? message = null)
     {
         { "-c | --connection-string | --connection <connection string>","Define the connection string." },
         { "-o | --output-directory | --out-dir <directory>]","Define the output directory." },
+        { "-n | --ns | --namespace <namespace>","Set the C# namespace in the output files."},
         { "-t | --table[s] <comma separated table list>","Generate only the specified tables."},
         { "[-d | --db | --database-engine <name of engine>]","Provide engine for connection string."},
         { "[--config-file <path>]","Use specified configuration file. Passed by default from CLI caller."},

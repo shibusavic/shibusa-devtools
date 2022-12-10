@@ -16,6 +16,7 @@
         /// <param name="dataType">The data type of the column.</param>
         /// <param name="maxLength">The max length of the column.</param>
         /// <param name="numericPrecision">The numeric precision of the column.</param>
+        /// <param name="isPrimaryKey">Indicator of whether column is a primary key.</param>
         public Column(string schema,
             string name,
             int ordinalPosition,
@@ -23,7 +24,7 @@
             bool isNullable,
             string dataType,
             int maxLength,
-            byte numericPrecision,
+            int numericPrecision,
             bool isPrimaryKey) : base(schema, name)
         {
             OrdinalPosition = ordinalPosition;
@@ -63,7 +64,7 @@
         /// <summary>
         /// Gets the numeric precision of the column.
         /// </summary>
-        public byte NumericPrecision { get; }
+        public int NumericPrecision { get; }
 
         /// <summary>
         /// Gets an indicator of whether this is a primary key.
@@ -105,7 +106,8 @@
         /// <returns>A hash code for the current object.</returns>
         public override int GetHashCode()
         {
-            return HashCode.Combine(base.GetHashCode(), OrdinalPosition, ColumnDefault, IsNullable, DataType, MaxLength, NumericPrecision, IsPrimaryKey);
+            return HashCode.Combine(base.GetHashCode(), OrdinalPosition, ColumnDefault, IsNullable,
+                DataType, MaxLength, NumericPrecision, IsPrimaryKey);
         }
     }
 }

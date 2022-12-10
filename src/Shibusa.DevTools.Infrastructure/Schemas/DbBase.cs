@@ -32,6 +32,11 @@
         public string FullName => $"{Schema}.{Name}";
 
         /// <summary>
+        /// Gets the full name of the database objects with square brackets.
+        /// </summary>
+        public string FullNameWithBrackets => $"[{Schema}].[{Name}]";
+
+        /// <summary>
         /// Determines whether the specified object is equal to the current object.
         /// </summary>
         /// <param name="obj">The object to compare with the current object.</param>
@@ -66,6 +71,6 @@
         /// Returns a string that represents the current object.
         /// </summary>
         /// <returns>A string that represents the current object.</returns>
-        public override string ToString() => $"{Schema}.{Name}";
+        public override string ToString() => FullName;
     }
 }

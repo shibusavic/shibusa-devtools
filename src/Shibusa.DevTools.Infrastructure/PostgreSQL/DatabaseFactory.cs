@@ -1,13 +1,14 @@
 ﻿using Dapper;
 using Shibusa.DevTools.Infrastructure.Schemas;
 using Npgsql;
+using Shibusa.DevTools.Infrastructure.Abstractions;
 
 namespace Shibusa.DevTools.Infrastructure.PostgreSQL
 {
     /// <summary>
     /// A factory for constructing <see cref="Database"/> objects from a PostgreSQL database.
     /// </summary>
-    public static class DatabaseFactory
+    public class DatabaseFactory : IDatabaseFactory
     {
         /// <summary>
         /// Create an instance of the <see cref="Database"/> object representing the database of the provided connection string.
@@ -16,11 +17,11 @@ namespace Shibusa.DevTools.Infrastructure.PostgreSQL
         /// <param name="includeTables">An indicator of whether to include tables.</param>
         /// <returns>A task representing the asyncronous operation; the task contains a
         /// <see cref="Database"/> instance.</returns>
-        public static async Task<Database> CreateAsync(string connectionString,
-            bool includeTables = true)
-        //bool includeViews = true,
-        //bool includeRoutines = true,
-        //bool includeForeignKeys = true)
+        public async Task<Database> CreateAsync(string connectionString,
+            bool includeTables = true,
+            bool includeViews = true,
+            bool includeRoutines = true,
+            bool includeForeignKeys = true)
         {
             if (string.IsNullOrWhiteSpace(connectionString)) { throw new ArgumentNullException(nameof(connectionString)); }
 
@@ -44,12 +45,13 @@ namespace Shibusa.DevTools.Infrastructure.PostgreSQL
             string tableSql = $"{GET_TABLES_SQL} WHERE table_schema = 'public' ORDER BY table_name";
 
             using var connection = new NpgsqlConnection(connectionString);
+            await connection.OpenAsync();
 
             var tableNames = await connection.QueryAsync<(string schema, string name)>(tableSql);
 
             foreach (var (schema, name) in tableNames)
             {
-                string columnSql = $"{GET_COLUMNS_SQL} WHERE table_schema = @Schema AND table_name = @Name ORDER BY ordinal_position";
+                string columnSql = $"{GET_COLUMNS_SQL} WHERE c.table_schema = @Schema AND c.table_name = @Name ORDER BY ordinal_position";
 
                 var columns = await connection.QueryAsync<Column>(columnSql,
                     new
@@ -100,46 +102,52 @@ namespace Shibusa.DevTools.Infrastructure.PostgreSQL
         //    return await connection.QueryAsync<Routine>(routineSql);
         //}
 
-        private static async Task<Table?> GetTableAsync(string connectionString, string schema, string name)
-        {
-            using var connection = new NpgsqlConnection(connectionString);
+        //private async Task<Table?> GetTableAsync(string connectionString, string schema, string name)
+        //{
+        //    using var connection = new NpgsqlConnection(connectionString);
 
-            string columnSql = $"{GET_COLUMNS_SQL} WHERE table_schema = @Schema AND table_name = @Name ORDER BY ordinal_position";
+        //    string columnSql = $"{GET_COLUMNS_SQL} WHERE c.table_schema = @Schema AND c.table_name = @Name ORDER BY ordinal_position";
 
-            var columns = await connection.QueryAsync<Column>(columnSql, new
-            {
-                Schema = schema,
-                Name = name
-            });
+        //    var columns = await connection.QueryAsync<Column>(columnSql, new
+        //    {
+        //        Schema = schema,
+        //        Name = name
+        //    });
 
-            if (columns.Any())
-            {
-                return new Table(schema, name, columns);
-            }
+        //    if (columns.Any())
+        //    {
+        //        return new Table(schema, name, columns);
+        //    }
 
-            return null;
-        }
+        //    return null;
+        //}
 
         private const string GET_TABLES_SQL = @"
 SELECT table_schema AS Schema, 
 table_name AS Name
-FROM information_schema.tables WHERE table_schema = 'public'
+FROM information_schema.tables
 ";
 
         private const string GET_COLUMNS_SQL = @"
 SELECT
-table_schema AS Schema,
-column_name AS Name,
-ordinal_position AS OrdinalPosition,
-column_default AS ColumnDefault,
-CASE is_nullable
+c.table_schema AS schema,
+c.column_name AS name,
+c.ordinal_position AS ordinalPosition,
+c.column_default AS columnDefault,
+CASE c.is_nullable
 WHEN 'YES' THEN true
 ELSE false
-END AS IsNullable,
-data_type AS DataType,
-character_maximum_length as MaxLength,
-numeric_precision AS NumericPrecision
-FROM information_schema.columns
+END AS isNullable,
+c.data_type AS dataType,
+c.character_maximum_length as maxLength,
+c.numeric_precision AS numericPrecision,
+CAST(CASE t.constraint_type
+WHEN 'PRIMARY KEY' THEN 1
+ELSE 0
+END AS BOOLEAN) AS isPrimaryKey
+FROM information_schema.columns c
+LEFT JOIN information_schema.constraint_column_usage cu on c.table_schema = c.table_schema AND c.table_name = cu.table_name AND c.column_name = cu.column_name
+LEFT JOIN information_schema.table_constraints t ON cu.constraint_name = t.constraint_name
 ";
 
         //        private const string GET_FOREIGN_KEYS_SQL = @"

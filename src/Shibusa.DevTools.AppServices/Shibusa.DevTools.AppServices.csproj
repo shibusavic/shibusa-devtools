@@ -8,6 +8,10 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <PackageReference Include="Shibusa.Transformations" Version="7.1.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\Shibusa.DevTools.Infrastructure\Shibusa.DevTools.Infrastructure.csproj" />
   </ItemGroup>
 
