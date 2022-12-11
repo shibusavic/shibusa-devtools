@@ -2,7 +2,7 @@
   "profiles": {
     "Shibusa.DevTools.CsGenerator.Cli": {
       "commandName": "Project",
-      "commandLineArgs": "-c \"User ID=postgres;Password=mypass;Host=127.0.0.1;Port=5432;Database=my_db;\"  -o /c/temp/devtools-gen/ -n \"Shibusa.Tests\" -d PostgreSQL --use-classes --use-property-getters --generate-constructor --include-attributes",
+      "commandLineArgs": "-c \"User ID=postgres;Password=18holesin1;Host=127.0.0.1;Port=5432;Database=eod_logs_test;\"  -o c:\\temp\\eod-logs\\ --ns \"EodImport.Infrastructure.PostgreSQL.DataAccessObjects\" --classes --property-getters --constructor --attributes"
     }
   }
 }

@@ -1,4 +1,5 @@
-﻿using Shibusa.DevTools.AppServices;
+﻿using Shibusa.Data.Abstractions;
+using Shibusa.DevTools.AppServices;
 using Shibusa.DevTools.Infrastructure.Abstractions;
 using Shibusa.Extensions;
 using System.Reflection;
@@ -34,7 +35,7 @@ try
 
         var database = await factory.CreateAsync(connectionString!, includeTables: true, false, false, false);
 
-        CancellationTokenSource cts = new CancellationTokenSource();
+        CancellationTokenSource cts = new();
 
         Task<Task<string>>[] tasks = new Task<Task<string>>[database.Tables.Count];
         int taskIndex = 0;
@@ -63,6 +64,10 @@ try
             for (int i = 0; i < completedTasks.Length; i++)
             {
                 Console.WriteLine(completedTasks.ElementAt(i).Result.Result);
+                if (completedTasks.ElementAt(i).Exception != null)
+                {
+                    Console.WriteLine(completedTasks.ElementAt(i).Exception?.ToString());
+                }
             }
         });
 

@@ -20,7 +20,8 @@ public static class CodeGenerationService
                             { "field-name", ConvertToCsPublicName(col.Value.Name) },
                             { "col-name", col.Value.Name},
                             { "col-order", col.Value.OrdinalPosition.ToString()},
-                            { "col-type-name", col.Value.DataType }
+                            { "col-type-name", col.Value.DataType },
+                            { "col-part-of-key", col.Value.IsPrimaryKey.ToString().ToLower()}
                          }, true));
                 }
                 else
@@ -31,7 +32,6 @@ public static class CodeGenerationService
                             { "field-name", ConvertToCsPublicName(col.Value.Name) }
                         }, true));
                 }
-
             }
             else
             {
@@ -46,7 +46,8 @@ public static class CodeGenerationService
                             { "prop-set", configuration.UsePropertySetters ? "set;" : "" },
                             { "col-name", col.Value.Name},
                             { "col-order", col.Value.OrdinalPosition.ToString()},
-                            { "col-type-name", col.Value.DataType }
+                            { "col-type-name", col.Value.DataType },
+                            { "col-part-of-key", col.Value.IsPrimaryKey.ToString().ToLower()}
                         }, true));
                 }
                 else
@@ -71,7 +72,8 @@ public static class CodeGenerationService
             { "object-constructor", GenerateConstructor(table)},
             { "object-body", string.Join(Environment.NewLine, collection)},
             { "object-usings", configuration.IncludeDbAttributes
-                ? "using System.ComponentModel.DataAnnotations.Schema;" : "" },
+                ? $"using System.ComponentModel.DataAnnotations.Schema;{
+                    Environment.NewLine}using Shibusa.Data;" : "" },
             { "table-attribute", configuration.IncludeDbAttributes ? TableAttribute : ""},
             { "table-name", table.Name},
             { "table-schema", table.Schema}
@@ -120,6 +122,8 @@ public static class CodeGenerationService
             string t when t is "bit" or "boolean" or "bool" => "bool",
             string t when t is "character" or "character varying" or "text" => "string",
             string t when t is "date" or "time" or "timestamp" => "DateTime",
+            string t when t is "timestamp with time zone" or "timestamp without time zone" => "DateTime",
+            string t when t is "timestamp" or "timestamptz" => "DateTime",
             string t when t is "double precision" => "double",
             string t when t is "integer" or "serial" => "int",
             string t when t is "money" or "numeric" => "decimal",
@@ -143,6 +147,11 @@ public static class CodeGenerationService
             if (!char.IsLetter(name[c]))
             {
                 nextCharIsUpper = true;
+
+                if (char.IsNumber(name[c]))
+                {
+                    chars.Add(name[c]);
+                }
                 continue;
             }
 
@@ -170,6 +179,11 @@ public static class CodeGenerationService
             if (!char.IsLetter(name[c]) && c > 0)
             {
                 nextCharIsUpper = true;
+                if (char.IsNumber(name[c]))
+                {
+                    chars.Add(name[c]);
+                }
+
                 continue;
             }
 
@@ -209,18 +223,17 @@ namespace #namespace#
 
     private static string TableAttribute => $"{GetTabs(1)}[Table(name: \"#table-name#\", Schema = \"#table-schema#\")]";
 
-    private static string PropertyTemplateWithAttribute => $"{Environment.NewLine}{GetTabs(2)}[Column(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\")]{PropertyTemplate}";
+    private static string PropertyTemplateWithAttribute =>
+        $"{Environment.NewLine}{GetTabs(2)}[ColumnWithKey(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\", IsPartOfKey = #col-part-of-key#)]{PropertyTemplate}";
 
     private static string PropertyTemplate => $"{Environment.NewLine}{GetTabs(2)}public #prop-type# #prop-name# {{ #prop-get# #prop-set# }}";
 
-    private static string FieldTemplateWithAttribute => $"{Environment.NewLine}{GetTabs(2)}[Column(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\")]{FieldTemplate}";
+    private static string FieldTemplateWithAttribute =>
+        $"{Environment.NewLine}{GetTabs(2)}[ColumnWithKey(\"#col-name#\", Order = #col-order#, TypeName = \"#col-type-name#\", IsPartOfKey = #col-part-of-key#)]{FieldTemplate}";
 
     private static string FieldTemplate => $"{Environment.NewLine}{GetTabs(2)}public #field-type# #field-name#;";
 
     private const int SizeOfTabs = 4;
 
-    private static string GetTabs(int numberOfTabs = 1)
-    {
-        return new string(' ', numberOfTabs * SizeOfTabs);
-    }
+    private static string GetTabs(int numberOfTabs = 1) => new string(' ', numberOfTabs * SizeOfTabs);
 }
